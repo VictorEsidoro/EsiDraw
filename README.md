@@ -141,7 +141,7 @@ Pelo Android Studio: **File → Open** na pasta do projeto, aguarde o sync e rod
 
 ### Release assinado
 
-Uma tag `vX.Y.Z` (ou `vX.Y.Z-test.N`) dispara `.github/workflows/release.yml`: roda os testes, gera o APK assinado e publica o GitHub Release (com sufixo, como pre-release). Segredos do repositório: `ANDROID_KEYSTORE_B64` (chave em base64), `KEYSTORE_PASSWORD` e, se a chave tiver mais de um apelido, `KEYSTORE_ALIAS`. A chave nunca vai pro Git.
+Em **Actions → Release → Run workflow**, informe a versão (`0.1.0-test.1` ou `0.1.0`). O `.github/workflows/release.yml` roda os testes, gera o APK assinado, cria a tag `v<versão>` e publica o GitHub Release (com sufixo, como pre-release). Segredos do repositório: `ANDROID_KEYSTORE_B64` (chave em base64), `KEYSTORE_PASSWORD` e, se a chave tiver mais de um apelido, `KEYSTORE_ALIAS`. A chave nunca vai pro Git.
 
 ### Testes
 
