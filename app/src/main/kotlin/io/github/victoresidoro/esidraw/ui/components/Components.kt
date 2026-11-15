@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -18,6 +19,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -127,4 +129,33 @@ fun PersonPicker(
             }
         }
     }
+}
+
+/** Campo de texto com cantos bem arredondados: o padrão visual dos apps (nada de caixa reta). */
+@Composable
+fun RoundedTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    label: @Composable (() -> Unit)? = null,
+    placeholder: @Composable (() -> Unit)? = null,
+    supportingText: @Composable (() -> Unit)? = null,
+    isError: Boolean = false,
+    singleLine: Boolean = false,
+    minLines: Int = 1,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        modifier = modifier,
+        label = label,
+        placeholder = placeholder,
+        supportingText = supportingText,
+        isError = isError,
+        singleLine = singleLine,
+        minLines = minLines,
+        keyboardOptions = keyboardOptions,
+        shape = RoundedCornerShape(16.dp),
+    )
 }

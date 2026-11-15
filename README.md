@@ -44,8 +44,19 @@ Preencha as abas da esquerda para a direita (veja a tabela abaixo). Quando tudo 
 ### Cadastrar participantes
 
 - **Digitando:** nome e telefone com DDD, por exemplo `(31) 98888-7777`.
-- **Da agenda:** toque em **Da agenda** e escolha o contato. O app pede permissão de leitura da agenda só nesse momento.
+- **Da agenda:** toque em **Da agenda**. O app pede permissão de leitura da agenda só nesse momento. Use a busca, escolha um **rótulo** do Google Contatos para ver só aquele grupo, toque em **Marcar todos** e depois em **Importar**.
+- **Colar lista:** cole um texto com uma pessoa por linha, por exemplo `Maria Silva - (31) 98888-7777`.
 - **Pelo WhatsApp:** nos dados do contato, use a opção de compartilhar o contato e escolha **EsiDraw**. Vários contatos de uma vez também funcionam. Contatos sem telefone com DDD são avisados e não entram na lista.
+
+### Grupos (para os próximos anos)
+
+Com a lista pronta, digite um nome (ex.: Grupo da Alegria) e toque em **Salvar lista atual como grupo**. No ano seguinte:
+
+1. Toque em **Usar** no grupo para trazer a lista de volta.
+2. Adicione quem entrou, remova quem saiu e toque na pessoa para corrigir o telefone de quem mudou.
+3. Toque em **Atualizar** no grupo para guardar a lista nova.
+
+Usar um grupo substitui a lista, as regras e o sorteio atuais (o app pede confirmação).
 
 ### Definir regras
 
@@ -79,6 +90,7 @@ Tudo fica **só no seu celular** (banco local). O aplicativo não tem acesso à 
 | O botão **Sortear** está desligado | Leia o quadro vermelho do diagnóstico: ele diz quem está causando o problema e quantas pessoas faltam. |
 | O sorteio foi descartado | Mudar participantes ou regras apaga o sorteio anterior, porque o resultado deixaria de valer. Sorteie de novo. |
 | O WhatsApp não abriu | Confira se o WhatsApp (ou WhatsApp Business) está instalado. Sem ele, o link abre no navegador. |
+| Quero marcar muitos contatos do WhatsApp | Salve-os na agenda com um rótulo no Google Contatos (ex.: Amigo oculto 2026) e filtre por ele em **Da agenda**. |
 | Compartilhei um contato e nada entrou | Provavelmente ele não tem telefone com DDD. O app avisa o nome do contato na mensagem que aparece na parte de baixo. |
 | Quero que eu mesmo não saiba o resultado | Use **Revelar aqui** em vez de **WhatsApp**. |
 

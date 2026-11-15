@@ -19,7 +19,6 @@ import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -35,6 +34,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import io.github.victoresidoro.esidraw.domain.message.Money
 import io.github.victoresidoro.esidraw.domain.model.EventSettings
+import io.github.victoresidoro.esidraw.ui.components.RoundedTextField
 import io.github.victoresidoro.esidraw.ui.components.ScreenHeader
 import io.github.victoresidoro.esidraw.ui.components.SectionCard
 import java.time.Instant
@@ -77,7 +77,7 @@ fun EventScreen(
         ScreenHeader("Evento", "Estes dados vão na mensagem enviada a cada participante.")
 
         SectionCard("Detalhes", Icons.Outlined.DateRange) {
-            OutlinedTextField(
+            RoundedTextField(
                 value = name,
                 onValueChange = {
                     name = it
@@ -117,7 +117,7 @@ fun EventScreen(
                     modifier = Modifier.weight(1f),
                 ) { Text(dateTime?.format(timeFormat) ?: "Horário") }
             }
-            OutlinedTextField(
+            RoundedTextField(
                 value = location,
                 onValueChange = {
                     location = it
@@ -127,7 +127,7 @@ fun EventScreen(
                 keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
                 modifier = Modifier.fillMaxWidth(),
             )
-            OutlinedTextField(
+            RoundedTextField(
                 value = value,
                 onValueChange = {
                     value = it
@@ -144,7 +144,7 @@ fun EventScreen(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 modifier = Modifier.fillMaxWidth(),
             )
-            OutlinedTextField(
+            RoundedTextField(
                 value = notes,
                 onValueChange = {
                     val limited = it.take(NOTES_LIMIT)

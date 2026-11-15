@@ -26,3 +26,10 @@ data class ParticipantStatus(
 )
 
 enum class AddParticipantResult { ADDED, DUPLICATE }
+
+/** Uma pessoa pronta para entrar numa lista: nome e telefone já normalizado. */
+data class Contact(val name: String, val phone: String)
+
+data class GroupSummary(val id: Long, val name: String, val memberCount: Int)
+
+data class ImportCounts(val added: Int, val duplicates: Int)

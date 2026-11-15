@@ -3,11 +3,16 @@ package io.github.victoresidoro.esidraw.data.repo
 import androidx.room.withTransaction
 import io.github.victoresidoro.esidraw.data.db.EsiDrawDatabase
 import io.github.victoresidoro.esidraw.data.db.EventEntity
+import io.github.victoresidoro.esidraw.data.db.GroupEntity
+import io.github.victoresidoro.esidraw.data.db.GroupMemberEntity
 import io.github.victoresidoro.esidraw.data.db.ParticipantEntity
 import io.github.victoresidoro.esidraw.data.db.RuleEntity
 import io.github.victoresidoro.esidraw.domain.message.EventDetails
 import io.github.victoresidoro.esidraw.domain.model.AddParticipantResult
+import io.github.victoresidoro.esidraw.domain.model.Contact
 import io.github.victoresidoro.esidraw.domain.model.CycleGuarantee
+import io.github.victoresidoro.esidraw.domain.model.GroupSummary
+import io.github.victoresidoro.esidraw.domain.model.ImportCounts
 import io.github.victoresidoro.esidraw.domain.model.DrawRules
 import io.github.victoresidoro.esidraw.domain.model.EventSettings
 import io.github.victoresidoro.esidraw.domain.model.Pairing
@@ -32,6 +37,9 @@ class RoomEsiDrawRepository(private val db: EsiDrawDatabase) : EsiDrawRepository
         DrawRules(blocks = pairings(forced = false), forced = pairings(forced = true))
     }
 
+    override val groups: Flow<List<GroupSummary>> =
+        dao.observeGroups().map { rows -> rows.map { GroupSummary(it.id, it.name, it.memberCount) } }
+
     override suspend fun updateEvent(transform: (EventSettings) -> EventSettings) {
         db.withTransaction { writeEvent(transform) }
     }
@@ -45,6 +53,57 @@ class RoomEsiDrawRepository(private val db: EsiDrawDatabase) : EsiDrawRepository
             discardDraw()
             AddParticipantResult.ADDED
         }
+
+    override suspend fun addParticipants(contacts: List<Contact>): ImportCounts = db.withTransaction {
+        val known = dao.getParticipants().map { it.name.lowercase() to it.phone }.toMutableSet()
+        var added = 0
+        var duplicates = 0
+        for (contact in contacts) {
+            val name = contact.name.trim()
+            if (!known.add(name.lowercase() to contact.phone)) {
+                duplicates++
+                continue
+            }
+            dao.insertParticipant(ParticipantEntity(name = name, phone = contact.phone))
+            added++
+        }
+        if (added > 0) discardDraw()
+        ImportCounts(added, duplicates)
+    }
+
+    override suspend fun updateParticipant(id: Long, name: String, phone: String) {
+        dao.updateParticipant(id, name.trim(), phone)
+    }
+
+    override suspend fun saveGroup(name: String) {
+        db.withTransaction {
+            val groupId = dao.insertGroup(GroupEntity(name = name.trim()))
+            dao.insertGroupMembers(currentMembers(groupId))
+        }
+    }
+
+    override suspend fun updateGroupFromCurrent(groupId: Long) {
+        db.withTransaction {
+            dao.deleteGroupMembers(groupId)
+            dao.insertGroupMembers(currentMembers(groupId))
+        }
+    }
+
+    override suspend fun loadGroup(groupId: Long) {
+        db.withTransaction {
+            val members = dao.getGroupMembers(groupId)
+            dao.deleteAllParticipants() // as regras ligadas a eles saem junto (ON DELETE CASCADE)
+            discardDraw()
+            members.forEach { dao.insertParticipant(ParticipantEntity(name = it.name, phone = it.phone)) }
+        }
+    }
+
+    override suspend fun deleteGroup(groupId: Long) {
+        dao.deleteGroup(groupId)
+    }
+
+    private suspend fun currentMembers(groupId: Long): List<GroupMemberEntity> =
+        dao.getParticipants().map { GroupMemberEntity(groupId = groupId, name = it.name, phone = it.phone) }
 
     override suspend fun removeParticipant(id: Long) {
         db.withTransaction {

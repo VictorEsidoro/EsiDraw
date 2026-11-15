@@ -34,6 +34,16 @@ interface EsiDrawDao {
     @Query("DELETE FROM participant WHERE id = :id")
     suspend fun deleteParticipant(id: Long)
 
+    @Query("DELETE FROM participant")
+    suspend fun deleteAllParticipants()
+
+    /** Editar nome/telefone não muda o sorteio; só quem trocou de telefone volta a "Pendente". */
+    @Query(
+        "UPDATE participant SET name = :name, " +
+            "messageSent = CASE WHEN phone != :phone THEN 0 ELSE messageSent END, phone = :phone WHERE id = :id",
+    )
+    suspend fun updateParticipant(id: Long, name: String, phone: String)
+
     @Query("UPDATE participant SET receiverId = NULL, messageSent = 0")
     suspend fun clearDraw()
 
@@ -48,6 +58,27 @@ interface EsiDrawDao {
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertRule(rule: RuleEntity): Long
+
+    @Query(
+        "SELECT g.id AS id, g.name AS name, COUNT(m.id) AS memberCount FROM contact_group g " +
+            "LEFT JOIN contact_group_member m ON m.groupId = g.id GROUP BY g.id ORDER BY g.name COLLATE NOCASE",
+    )
+    fun observeGroups(): Flow<List<GroupSummaryRow>>
+
+    @Insert
+    suspend fun insertGroup(group: GroupEntity): Long
+
+    @Insert
+    suspend fun insertGroupMembers(members: List<GroupMemberEntity>)
+
+    @Query("SELECT * FROM contact_group_member WHERE groupId = :groupId ORDER BY name COLLATE NOCASE")
+    suspend fun getGroupMembers(groupId: Long): List<GroupMemberEntity>
+
+    @Query("DELETE FROM contact_group_member WHERE groupId = :groupId")
+    suspend fun deleteGroupMembers(groupId: Long)
+
+    @Query("DELETE FROM contact_group WHERE id = :groupId")
+    suspend fun deleteGroup(groupId: Long)
 
     @Query("DELETE FROM rule WHERE forced = :forced AND giverId = :giverId AND receiverId = :receiverId")
     suspend fun deleteRule(forced: Boolean, giverId: Long, receiverId: Long)

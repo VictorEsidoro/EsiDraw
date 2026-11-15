@@ -8,6 +8,8 @@ import io.github.victoresidoro.esidraw.data.vcard.VCardParser
 import io.github.victoresidoro.esidraw.data.vcard.VCardParser.toImported
 import io.github.victoresidoro.esidraw.domain.engine.DrawEngine
 import io.github.victoresidoro.esidraw.domain.model.AddParticipantResult
+import io.github.victoresidoro.esidraw.domain.model.Contact
+import io.github.victoresidoro.esidraw.domain.model.GroupSummary
 import io.github.victoresidoro.esidraw.domain.model.CycleGuarantee
 import io.github.victoresidoro.esidraw.domain.model.Diagnosis
 import io.github.victoresidoro.esidraw.domain.model.DrawOptions
@@ -17,6 +19,7 @@ import io.github.victoresidoro.esidraw.domain.model.EventSettings
 import io.github.victoresidoro.esidraw.domain.model.Pairing
 import io.github.victoresidoro.esidraw.domain.model.ParticipantStatus
 import io.github.victoresidoro.esidraw.domain.phone.PhoneNumber
+import io.github.victoresidoro.esidraw.domain.phone.TextListParser
 import io.github.victoresidoro.esidraw.domain.repository.EsiDrawRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -41,6 +44,7 @@ data class EsiDrawUiState(
     val event: EventSettings = EventSettings(),
     val participants: List<ParticipantStatus> = emptyList(),
     val rules: DrawRules = DrawRules(),
+    val groups: List<GroupSummary> = emptyList(),
     /** `null` = o sorteio é possível com as regras atuais. */
     val diagnosis: Diagnosis? = null,
     /** Todos os participantes já têm quem tirar. */
@@ -58,12 +62,14 @@ class EsiDrawViewModel(private val repository: EsiDrawRepository) : ViewModel() 
         repository.event,
         repository.participants,
         repository.rules,
-    ) { event, participants, rules ->
+        repository.groups,
+    ) { event, participants, rules, groups ->
         EsiDrawUiState(
             loaded = true,
             event = event,
             participants = participants,
             rules = rules,
+            groups = groups,
             diagnosis = engine.analyze(participants.map { it.participant }, rules),
             hasDraw = participants.isNotEmpty() && participants.all { it.receiverId != null },
         )
@@ -117,32 +123,84 @@ class EsiDrawViewModel(private val repository: EsiDrawRepository) : ViewModel() 
         }
     }
 
+    /** Lista colada em texto: "Nome telefone", uma pessoa por linha. */
+    fun importText(text: String) {
+        val entries = TextListParser.parse(text)
+        if (entries.isEmpty()) return notify("Não encontrei ninguém no texto colado.")
+        importContacts(entries.map { ImportedContact(it.name, it.phone) })
+    }
+
     fun importContacts(contacts: List<ImportedContact>) {
         viewModelScope.launch {
             val hadDraw = state.value.hasDraw
-            var added = 0
-            var duplicates = 0
+            val valid = mutableListOf<Contact>()
             val withoutPhone = mutableListOf<String>()
             for (contact in contacts) {
                 val phone = contact.phone
                 if (contact.name.isBlank() || phone == null) {
                     withoutPhone += contact.name.ifBlank { "(sem nome)" }
-                    continue
-                }
-                when (repository.addParticipant(contact.name, phone)) {
-                    AddParticipantResult.ADDED -> added++
-                    AddParticipantResult.DUPLICATE -> duplicates++
+                } else {
+                    valid += Contact(contact.name, phone)
                 }
             }
+            val counts = repository.addParticipants(valid)
             val parts = buildList {
-                if (added > 0) add(if (added == 1) "1 contato adicionado" else "$added contatos adicionados")
-                if (duplicates > 0) add("$duplicates já estava(m) na lista")
-                if (withoutPhone.isNotEmpty()) {
-                    add("sem telefone com DDD: ${withoutPhone.joinToString(", ")}")
-                }
+                if (counts.added > 0) add(if (counts.added == 1) "1 contato adicionado" else "${counts.added} contatos adicionados")
+                if (counts.duplicates > 0) add("${counts.duplicates} já estava(m) na lista")
+                if (withoutPhone.isNotEmpty()) add("sem telefone com DDD: ${withoutPhone.joinToString(", ")}")
             }
             val summary = parts.joinToString("; ").replaceFirstChar { it.uppercase() } + "."
-            notify(if (hadDraw && added > 0) "$summary $DRAW_DISCARDED" else summary)
+            notify(if (hadDraw && counts.added > 0) "$summary $DRAW_DISCARDED" else summary)
+        }
+    }
+
+    fun updateParticipant(id: Long, name: String, rawPhone: String, onDone: () -> Unit) {
+        val cleanName = name.trim()
+        if (cleanName.isEmpty()) return notify("Informe o nome.")
+        val phone = PhoneNumber.normalize(rawPhone)
+            ?: return notify("Telefone inválido. Informe DDD + número, ex.: (31) 98888-7777.")
+        viewModelScope.launch {
+            repository.updateParticipant(id, cleanName, phone)
+            onDone()
+            notify("$cleanName atualizado(a).")
+        }
+    }
+
+    // --- Grupos ----------------------------------------------------------------------------------
+
+    fun saveGroup(name: String, onDone: () -> Unit) {
+        val cleanName = name.trim()
+        if (cleanName.isEmpty()) return notify("Dê um nome ao grupo.")
+        if (state.value.participants.isEmpty()) return notify("A lista está vazia: adicione pessoas antes de salvar o grupo.")
+        if (state.value.groups.any { it.name.equals(cleanName, ignoreCase = true) }) {
+            return notify("Já existe um grupo chamado $cleanName. Use Atualizar nele.")
+        }
+        viewModelScope.launch {
+            repository.saveGroup(cleanName)
+            onDone()
+            notify("Grupo $cleanName salvo com ${state.value.participants.size} pessoas.")
+        }
+    }
+
+    fun updateGroup(group: GroupSummary) {
+        if (state.value.participants.isEmpty()) return notify("A lista está vazia: o grupo ficaria sem ninguém.")
+        viewModelScope.launch {
+            repository.updateGroupFromCurrent(group.id)
+            notify("Grupo ${group.name} atualizado com a lista atual.")
+        }
+    }
+
+    fun loadGroup(group: GroupSummary) {
+        viewModelScope.launch {
+            repository.loadGroup(group.id)
+            notify("Grupo ${group.name} carregado: ${group.memberCount} pessoas. Regras e sorteio anteriores foram zerados.")
+        }
+    }
+
+    fun deleteGroup(group: GroupSummary) {
+        viewModelScope.launch {
+            repository.deleteGroup(group.id)
+            notify("Grupo ${group.name} excluído.")
         }
     }
 

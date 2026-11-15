@@ -76,9 +76,16 @@ fun EsiDrawApp(viewModel: EsiDrawViewModel) {
                     )
                     Tab.PARTICIPANTS -> ParticipantsScreen(
                         participants = state.participants,
+                        groups = state.groups,
                         onAdd = { name, phone, onDone -> viewModel.addParticipant(name, phone, onDone) },
                         onImport = viewModel::importContacts,
+                        onImportText = viewModel::importText,
+                        onUpdate = { id, name, phone, onDone -> viewModel.updateParticipant(id, name, phone, onDone) },
                         onRemove = viewModel::removeParticipant,
+                        onSaveGroup = { name, onDone -> viewModel.saveGroup(name, onDone) },
+                        onUpdateGroup = viewModel::updateGroup,
+                        onLoadGroup = viewModel::loadGroup,
+                        onDeleteGroup = viewModel::deleteGroup,
                         onMessage = viewModel::notify,
                     )
                     Tab.RULES -> RulesScreen(

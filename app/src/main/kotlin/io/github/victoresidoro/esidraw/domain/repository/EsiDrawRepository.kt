@@ -1,6 +1,9 @@
 package io.github.victoresidoro.esidraw.domain.repository
 
 import io.github.victoresidoro.esidraw.domain.model.AddParticipantResult
+import io.github.victoresidoro.esidraw.domain.model.Contact
+import io.github.victoresidoro.esidraw.domain.model.GroupSummary
+import io.github.victoresidoro.esidraw.domain.model.ImportCounts
 import io.github.victoresidoro.esidraw.domain.model.CycleGuarantee
 import io.github.victoresidoro.esidraw.domain.model.DrawRules
 import io.github.victoresidoro.esidraw.domain.model.EventSettings
@@ -16,12 +19,31 @@ interface EsiDrawRepository {
     val event: Flow<EventSettings>
     val participants: Flow<List<ParticipantStatus>>
     val rules: Flow<DrawRules>
+    val groups: Flow<List<GroupSummary>>
 
     /** Aplica [transform] ao evento atual de forma atômica (várias edições seguidas não se perdem). */
     suspend fun updateEvent(transform: (EventSettings) -> EventSettings)
 
     suspend fun addParticipant(name: String, phone: String): AddParticipantResult
+    /** Adiciona várias pessoas de uma vez, pulando as que já estão na lista (mesmo nome e telefone). */
+    suspend fun addParticipants(contacts: List<Contact>): ImportCounts
+
+    /** Edita nome e telefone sem refazer o sorteio. Quem trocou de telefone volta a "Pendente". */
+    suspend fun updateParticipant(id: Long, name: String, phone: String)
+
     suspend fun removeParticipant(id: Long)
+
+    // --- Grupos: a lista atual vira um grupo salvo; no ano seguinte o grupo volta para a lista ---
+
+    suspend fun saveGroup(name: String)
+
+    /** Troca os membros do grupo pela lista atual (quem entrou, saiu ou mudou de telefone). */
+    suspend fun updateGroupFromCurrent(groupId: Long)
+
+    /** Substitui a lista atual pelos membros do grupo. Regras e sorteio atuais são descartados. */
+    suspend fun loadGroup(groupId: Long)
+
+    suspend fun deleteGroup(groupId: Long)
 
     suspend fun addBlock(pairing: Pairing, bothWays: Boolean)
     suspend fun removeBlock(pairing: Pairing)

@@ -61,3 +61,32 @@ data class RuleEntity(
     val giverId: Long,
     val receiverId: Long,
 )
+
+/** Grupo salvo de pessoas (ex.: "Grupo da Alegria") para reaproveitar nos sorteios dos próximos anos. */
+@Entity(tableName = "contact_group")
+data class GroupEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val name: String,
+)
+
+@Entity(
+    tableName = "contact_group_member",
+    foreignKeys = [
+        ForeignKey(
+            entity = GroupEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["groupId"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+    ],
+    indices = [Index(value = ["groupId"])],
+)
+data class GroupMemberEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val groupId: Long,
+    val name: String,
+    val phone: String,
+)
+
+/** Resultado da consulta que junta cada grupo com a contagem de membros. */
+data class GroupSummaryRow(val id: Long, val name: String, val memberCount: Int)
