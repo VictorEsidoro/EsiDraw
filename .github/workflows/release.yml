@@ -1,0 +1,118 @@
+name: Release
+
+# Publica o APK assinado num GitHub Release a partir de uma tag (ex.: v0.1.0-test.1 ou v0.1.0).
+# Versão com sufixo (-test.N, -beta.N, -rc.N) vira pre-release.
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: APK assinado e GitHub Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # criar o release e anexar o APK
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Ler a versão da tag
+        id: version
+        run: |
+          set -euo pipefail
+          tag="${GITHUB_REF_NAME}"
+          version="${tag#v}"
+          if ! [[ "${version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$ ]]; then
+            echo "::error::Tag '${tag}' fora do padrão vMAJOR.MINOR.PATCH[-sufixo]" && exit 1
+          fi
+          base="${version%%-*}"
+          # A versão limpa da tag precisa bater com a do CHANGELOG, para não publicar com número esquecido.
+          grep -q "^## \[${base}\]" CHANGELOG.md || {
+            echo "::error::CHANGELOG.md não tem a seção [${base}]" && exit 1
+          }
+          case "${version}" in
+            *-rc*)   channel=rc; prerelease=true ;;
+            *-beta*) channel=beta; prerelease=true ;;
+            *-*)     channel=alpha; prerelease=true ;;
+            *)       channel=stable; prerelease=false ;;
+          esac
+          {
+            echo "version=${version}"
+            echo "base=${base}"
+            echo "channel=${channel}"
+            echo "prerelease=${prerelease}"
+          } >> "${GITHUB_OUTPUT}"
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Restaurar a chave de assinatura
+        env:
+          ANDROID_KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEYSTORE_ALIAS_SECRET: ${{ secrets.KEYSTORE_ALIAS }}
+        run: |
+          set -euo pipefail
+          test -n "${ANDROID_KEYSTORE_B64}" || { echo "::error::ANDROID_KEYSTORE_B64 ausente" && exit 1; }
+          test -n "${KEYSTORE_PASSWORD}" || { echo "::error::KEYSTORE_PASSWORD ausente" && exit 1; }
+          printf '%s' "${ANDROID_KEYSTORE_B64}" | base64 --decode > android.keystore
+          test -s android.keystore || { echo "::error::ANDROID_KEYSTORE_B64 não é base64 válido" && exit 1; }
+          if [ -n "${KEYSTORE_ALIAS_SECRET}" ]; then
+            alias="${KEYSTORE_ALIAS_SECRET}"
+          else
+            # Sem o segredo KEYSTORE_ALIAS, usa o apelido da chave, desde que seja uma só.
+            mapfile -t aliases < <(keytool -list -keystore android.keystore -storepass:env KEYSTORE_PASSWORD \
+              | awk -F', ' '/PrivateKeyEntry/ {print $1}')
+            if [ "${#aliases[@]}" -ne 1 ]; then
+              echo "::error::A chave tem ${#aliases[@]} apelidos; grave o segredo KEYSTORE_ALIAS" && exit 1
+            fi
+            alias="${aliases[0]}"
+          fi
+          echo "::add-mask::${alias}"
+          echo "KEYSTORE_ALIAS=${alias}" >> "${GITHUB_ENV}"
+
+      - name: Testes e APK de release
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        run: >-
+          ./gradlew --no-daemon testDebugUnitTest assembleRelease
+          -PappVersionName=${{ steps.version.outputs.version }}
+          -PappVersionCode=${{ github.run_number }}
+
+      - name: Conferir a assinatura
+        run: |
+          set -euo pipefail
+          apk="$(find app/build/outputs/apk/release -name '*.apk' | head -n1)"
+          test -n "${apk}" || { echo "::error::APK de release não encontrado" && exit 1; }
+          apksigner="$(find "${ANDROID_HOME}/build-tools" -name apksigner | sort | tail -n1)"
+          "${apksigner}" verify --print-certs "${apk}"
+          cp "${apk}" "EsiDraw-${{ steps.version.outputs.version }}.apk"
+
+      - name: Publicar o GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          version="${{ steps.version.outputs.version }}"
+          # Notas = a seção da versão limpa no CHANGELOG.
+          awk -v v="${{ steps.version.outputs.base }}" '
+            $0 ~ "^## \\[" v "\\]" {on=1; next}
+            on && /^## \[/ {exit}
+            on {print}
+          ' CHANGELOG.md > notes.md
+          flags=()
+          if [ "${{ steps.version.outputs.prerelease }}" = "true" ]; then flags+=(--prerelease); fi
+          gh release create "${GITHUB_REF_NAME}" "EsiDraw-${version}.apk" \
+            --title "EsiDraw ${{ steps.version.outputs.channel }} ${version}" \
+            --notes-file notes.md --verify-tag "${flags[@]}"

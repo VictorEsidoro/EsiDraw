@@ -139,6 +139,10 @@ Pelo Android Studio: **File → Open** na pasta do projeto, aguarde o sync e rod
 
 > O esquema do Room é exportado para `app/schemas/` na primeira compilação. Versione essa pasta: ela é a base para validar as migrações quando o banco mudar.
 
+### Release assinado
+
+Uma tag `vX.Y.Z` (ou `vX.Y.Z-test.N`) dispara `.github/workflows/release.yml`: roda os testes, gera o APK assinado e publica o GitHub Release (com sufixo, como pre-release). Segredos do repositório: `ANDROID_KEYSTORE_B64` (chave em base64), `KEYSTORE_PASSWORD` e, se a chave tiver mais de um apelido, `KEYSTORE_ALIAS`. A chave nunca vai pro Git.
+
 ### Testes
 
 `DrawEngineTest` (sorteio simples, bloqueios mútuos, pares forçados, cenários impossíveis com diagnóstico exato, concordância entre `analyze` e `draw` em regras aleatórias), `VCardParserTest`, `PhoneNumberTest`, `WhatsAppMessageTest` e `MoneyTest`.
