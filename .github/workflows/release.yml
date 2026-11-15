@@ -95,7 +95,7 @@ jobs:
         env:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
         run: >-
-          ./gradlew --no-daemon testDebugUnitTest assembleRelease
+          ./gradlew --no-daemon --no-parallel testDebugUnitTest assembleRelease
           -PappVersionName=${{ steps.version.outputs.version }}
           -PappVersionCode=${{ github.run_number }}
 

@@ -22,6 +22,10 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 - Todos os campos de texto agora têm cantos bem arredondados.
 - **Da agenda** deixou de abrir o seletor de um contato só do Android.
 
+### Corrigido
+
+- Release: o KSP das variantes debug e release escrevia o mesmo arquivo de esquema do Room ao mesmo tempo e corrompia o JSON; o workflow agora compila em sequência.
+
 ### Observação
 
 - As regras (bloqueios e pares forçados) ainda não são guardadas nos grupos; só nome e telefone. Fica para a 0.3.0.
