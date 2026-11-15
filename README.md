@@ -34,7 +34,7 @@ Preencha as abas da esquerda para a direita (veja a tabela abaixo). Quando tudo 
 
 | Aba | Para que serve |
 |---|---|
-| **Evento** | Nome, data, horário, local, valor sugerido e observações. Tudo isso vai automaticamente na mensagem de cada participante. Aqui também fica a opção de evitar duplas isoladas. |
+| **Evento** | Nome, data, horário, local, valor sugerido e observações. Tudo isso vai automaticamente na mensagem de cada participante. Aqui também ficam as opções **Eu participo do sorteio** e de evitar duplas isoladas. |
 | **Pessoas** | Cadastro dos participantes: digitando, pela agenda do celular ou compartilhando contatos do WhatsApp. |
 | **Regras** | **Bloqueios** (quem não pode tirar quem, nos dois sentidos ou só em um) e **pares forçados** (quem tem que tirar quem). |
 | **Sorteio** | Faz o sorteio, mostra o diagnóstico se for impossível e controla a entrega individual de cada resultado. |
@@ -62,10 +62,10 @@ Na lista **Entrega individual**, cada pessoa tem o status **Pendente** ou **Envi
 
 | Opção | O que faz | Privacidade |
 |---|---|---|
-| **WhatsApp** | Abre a conversa com a pessoa já com a mensagem pronta (saudação, nome sorteado em negrito, data, local, valor e observações). Você só toca em enviar. | **O organizador consegue ver.** A mensagem sai da sua conta e fica no seu histórico com aquela pessoa. |
+| **WhatsApp** | Abre a conversa com a pessoa já com a mensagem pronta (saudação, nome sorteado em negrito, data, local, valor e observações). Você só toca em enviar. | **O organizador consegue ver.** A mensagem sai da sua conta e fica no seu histórico com aquela pessoa. Só importa se você participa do sorteio. |
 | **Revelar aqui** | Você passa o celular, a pessoa toca em "Sou fulano" e vê o próprio resultado na tela. Nada é enviado. | **Privado de verdade.** O organizador não vê. |
 
-O botão **Espiar resultado** mostra tudo para você, mas só depois de uma confirmação.
+Se você **não participa** do sorteio (desligue **Eu participo do sorteio** na aba Evento), o aviso de privacidade some e o botão **Ver resultado** mostra tudo na hora. Se você participa, o botão vira **Espiar resultado** e pede uma confirmação antes, porque estraga a sua surpresa.
 
 ## Seus dados
 

@@ -121,6 +121,7 @@ class RoomEsiDrawRepository(private val db: EsiDrawDatabase) : EsiDrawRepository
             notes = notes,
         ),
         avoidShortCycles = avoidShortCycles,
+        organizerParticipates = organizerParticipates,
         cycleGuarantee = cycleGuarantee?.let { runCatching { CycleGuarantee.valueOf(it) }.getOrNull() },
     )
 
@@ -131,6 +132,7 @@ class RoomEsiDrawRepository(private val db: EsiDrawDatabase) : EsiDrawRepository
         giftValueCents = details.giftValueCents,
         notes = details.notes,
         avoidShortCycles = avoidShortCycles,
+        organizerParticipates = organizerParticipates,
         cycleGuarantee = cycleGuarantee?.name,
     )
 

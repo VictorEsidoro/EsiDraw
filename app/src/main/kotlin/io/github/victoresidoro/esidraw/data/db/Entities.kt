@@ -17,6 +17,7 @@ data class EventEntity(
     val giftValueCents: Long? = null,
     val notes: String = "",
     val avoidShortCycles: Boolean = true,
+    val organizerParticipates: Boolean = true,
     /** Nome de `CycleGuarantee` do último sorteio, ou `null`. */
     val cycleGuarantee: String? = null,
 )

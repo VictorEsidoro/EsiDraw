@@ -6,6 +6,11 @@ import io.github.victoresidoro.esidraw.domain.message.EventDetails
 data class EventSettings(
     val details: EventDetails = EventDetails(),
     val avoidShortCycles: Boolean = true,
+    /**
+     * O organizador também está na lista de participantes? Se sim, ele não deve ver o resultado dos
+     * outros (o WhatsApp deixa a mensagem no histórico dele). Se não, ver o resultado é livre.
+     */
+    val organizerParticipates: Boolean = true,
     /** `null` enquanto não há sorteio feito. */
     val cycleGuarantee: CycleGuarantee? = null,
 )

@@ -65,6 +65,7 @@ fun DrawDispatchScreen(
 
     val byId = state.participants.associateBy { it.participant.id }
     val sentCount = state.participants.count { it.messageSent }
+    val organizerPlays = state.event.organizerParticipates
 
     Column(
         modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
@@ -86,7 +87,7 @@ fun DrawDispatchScreen(
                 Text(
                     "${state.participants.size} participantes, " +
                         "${state.rules.blocks.size} bloqueio(s), ${state.rules.forced.size} par(es) forçado(s). " +
-                        "Ninguém vê o resultado: ele só aparece na mensagem de cada pessoa.",
+                        if (organizerPlays) "Ninguém vê o resultado: ele só aparece na mensagem de cada pessoa." else "O resultado só aparece na mensagem de cada pessoa, mas você pode vê-lo depois.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -101,7 +102,7 @@ fun DrawDispatchScreen(
             if (guarantee.isNotEmpty()) Text(guarantee, style = MaterialTheme.typography.bodyMedium)
         }
 
-        NoticeCard(Icons.Outlined.Warning, warningContainer, onWarningContainer) {
+        if (organizerPlays) NoticeCard(Icons.Outlined.Warning, warningContainer, onWarningContainer) {
             Text("Privacidade", style = MaterialTheme.typography.titleMedium)
             Text(
                 "O WhatsApp envia a mensagem pela SUA conta e ela fica na sua conversa com cada pessoa: " +
@@ -154,7 +155,12 @@ fun DrawDispatchScreen(
 
         SectionCard("Organizador", Icons.Outlined.Face) {
             OutlinedButton(onClick = { confirmRedo = true }, modifier = Modifier.fillMaxWidth()) { Text("Refazer sorteio") }
-            TextButton(onClick = { confirmPeek = true }, modifier = Modifier.fillMaxWidth()) { Text("Espiar resultado") }
+            if (organizerPlays) {
+                // Participando, ver o resultado estraga a surpresa dele: exige confirmação.
+                TextButton(onClick = { confirmPeek = true }, modifier = Modifier.fillMaxWidth()) { Text("Espiar resultado") }
+            } else {
+                TextButton(onClick = { showPeek = true }, modifier = Modifier.fillMaxWidth()) { Text("Ver resultado") }
+            }
         }
     }
 

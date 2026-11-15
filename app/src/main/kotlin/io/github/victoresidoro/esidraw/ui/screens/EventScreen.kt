@@ -15,6 +15,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.DateRange
+import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -156,6 +157,29 @@ fun EventScreen(
                 minLines = 3,
                 modifier = Modifier.fillMaxWidth(),
             )
+        }
+
+        SectionCard("Organizador", Icons.Outlined.Person) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("Eu participo do sorteio", style = MaterialTheme.typography.bodyLarge)
+                    Text(
+                        if (event.organizerParticipates) {
+                            "Adicione você mesmo na lista de Pessoas. Para você não saber o resultado dos outros, " +
+                                "entregue com \"Revelar aqui\": o WhatsApp deixa a mensagem no seu histórico."
+                        } else {
+                            "Você só organiza: pode ver o resultado completo e o WhatsApp é a forma mais prática de entregar."
+                        },
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Spacer(Modifier.width(12.dp))
+                Switch(
+                    checked = event.organizerParticipates,
+                    onCheckedChange = { checked -> onChange { it.copy(organizerParticipates = checked) } },
+                )
+            }
         }
 
         SectionCard("Evitar duplas isoladas", Icons.Outlined.Refresh) {

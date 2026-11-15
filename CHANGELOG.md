@@ -19,7 +19,8 @@ Primeira versão (alpha).
 - Prevenção de ciclos curtos em três níveis (ciclo único, sem duplas A↔B, sem garantia), com o nível aplicado informado na tela.
 - Diagnóstico de inviabilidade: aponta quem causa o gargalo (teorema de Hall) e quantas pessoas sem regras faltam, por simulação.
 - Entrega individual com status **Pendente**/**Enviado**: link do WhatsApp com mensagem pronta (nome sorteado em negrito) e modo **Revelar aqui**, sem enviar nada.
-- Botão **Espiar resultado** protegido por confirmação.
+- Opção **Eu participo do sorteio**: participando, o aviso de privacidade aparece e **Espiar resultado** pede confirmação; não participando, o aviso some e **Ver resultado** é direto.
+- Botão **Espiar resultado** protegido por confirmação (quando o organizador participa).
 - Persistência com Room: evento, participantes, regras, resultado e status de envio sobrevivem ao fechamento do app.
 - Telas em Jetpack Compose + Material 3 no padrão visual dos apps do autor.
 - Testes unitários: `DrawEngineTest`, `VCardParserTest`, `PhoneNumberTest`, `WhatsAppMessageTest`, `MoneyTest`.
