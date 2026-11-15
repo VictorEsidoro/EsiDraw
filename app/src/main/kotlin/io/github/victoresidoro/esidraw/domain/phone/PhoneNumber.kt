@@ -15,7 +15,8 @@ object PhoneNumber {
         waid?.let { digitsOnly(it) }
             ?.takeIf { it.length in 8..15 }
             ?.let { id ->
-                return if (id.startsWith(BR)) brazilian(id.drop(BR.length)) else id
+                // O waid é o identificador que o próprio WhatsApp usa: fica exatamente como veio.
+                return if (id.startsWith(BR)) brazilian(id.drop(BR.length), addNinth = false) else id
             }
         if (raw == null) return null
 
@@ -49,12 +50,19 @@ object PhoneNumber {
         return "+$normalized"
     }
 
-    /** Número nacional (DDD + assinante) → com 55; `null` se o DDD ou o tamanho não fizerem sentido. */
-    private fun brazilian(national: String): String? {
+    /**
+     * Número nacional (DDD + assinante) → com 55; `null` se o DDD ou o tamanho não fizerem sentido.
+     * Com [addNinth], celular antigo de 8 dígitos (começa com 6 a 9, ex.: 9295-8748) ganha o 9 na frente,
+     * que é o formato atual em todo o país; fixo (começa com 2 a 5) não muda.
+     */
+    private fun brazilian(national: String, addNinth: Boolean = true): String? {
         if (national.length !in 10..11) return null
         val ddd = national.take(2).toIntOrNull() ?: return null
         if (ddd !in VALID_DDD) return null
         if (national.length == 11 && national[2] != '9') return null // celular tem 9 na frente
+        if (addNinth && national.length == 10 && national[2] in '6'..'9') {
+            return BR + national.take(2) + "9" + national.drop(2)
+        }
         return BR + national
     }
 

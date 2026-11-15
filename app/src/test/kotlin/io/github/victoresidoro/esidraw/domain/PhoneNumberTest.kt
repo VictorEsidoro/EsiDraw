@@ -59,4 +59,21 @@ class PhoneNumberTest {
         assertEquals("+55 (31) 3333-4444", PhoneNumber.format("553133334444"))
         assertEquals("+14155550123", PhoneNumber.format("14155550123"))
     }
+
+    @Test
+    fun `celular antigo de 8 digitos ganha o nono digito`() {
+        assertEquals("5531992958748", PhoneNumber.normalize("+55 (31) 9295-8748"))
+        assertEquals("5531992958748", PhoneNumber.normalize("(31) 9295-8748"))
+        assertEquals("5531982958748", PhoneNumber.normalize("31 8295-8748"))
+    }
+
+    @Test
+    fun `telefone fixo nao ganha nono digito`() {
+        assertEquals("553133334444", PhoneNumber.normalize("(31) 3333-4444"))
+    }
+
+    @Test
+    fun `waid do WhatsApp fica exatamente como veio`() {
+        assertEquals("553192958748", PhoneNumber.normalize("qualquer", waid = "553192958748"))
+    }
 }
