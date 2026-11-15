@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Só o tema da janela antes do Compose desenhar; o visual do app fica em ui/theme. -->
+<resources>
+    <style name="Theme.EsiDraw" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/window_background</item>
+    </style>
+</resources>

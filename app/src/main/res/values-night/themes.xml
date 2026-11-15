@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Sem isto a janela pisca branca por um quadro ao abrir no modo escuro. -->
+<resources>
+    <style name="Theme.EsiDraw" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/window_background</item>
+    </style>
+</resources>

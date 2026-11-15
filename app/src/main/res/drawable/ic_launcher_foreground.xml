@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Presente de laço azul sobre fundo ardósia (zona segura central de 66dp). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#D7E3FA"
+        android:pathData="M34,54h40v26h-40z" />
+    <path
+        android:fillColor="#8AB4F8"
+        android:pathData="M30,46h48v8h-48z" />
+    <path
+        android:fillColor="#2C5EA8"
+        android:pathData="M51,46h6v34h-6z" />
+    <path
+        android:fillColor="#8AB4F8"
+        android:pathData="M54,46C48,32 36,36 43,46z" />
+    <path
+        android:fillColor="#8AB4F8"
+        android:pathData="M54,46C60,32 72,36 65,46z" />
+</vector>
