@@ -20,6 +20,10 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 - O EsiDraw aparece ao **compartilhar ou abrir** uma planilha `.xlsx`/`.csv` (por exemplo, recebida no WhatsApp): importa direto.
 - Testes de `DrawEditor` e de leitura de planilhas (xlsx gerado pelo Excel/openpyxl, csv, modelo vazio).
 
+### Corrigido
+
+- Importar planilha `.xlsx` falhava no Android ("Não consegui ler a planilha"): o parser de XML do sistema não aceitava uma configuração que funcionava no computador. O `.xlsx` agora é lido por um leitor próprio, igual nos dois.
+
 ### Alterado
 
 - Banco: a exportação de esquema do Room foi desligada, porque o KSP corrompia o arquivo no build de release.

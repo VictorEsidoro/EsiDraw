@@ -2,15 +2,12 @@ package io.github.victoresidoro.esidraw.data.sheet
 
 import io.github.victoresidoro.esidraw.domain.phone.ListEntry
 import io.github.victoresidoro.esidraw.domain.phone.PhoneNumber
-import org.w3c.dom.Element
-import org.w3c.dom.Node
 import java.io.ByteArrayInputStream
 import java.math.BigDecimal
 import java.nio.ByteBuffer
 import java.nio.charset.CharacterCodingException
 import java.nio.charset.CodingErrorAction
 import java.util.zip.ZipInputStream
-import javax.xml.parsers.DocumentBuilderFactory
 
 class SpreadsheetException(message: String) : Exception(message)
 
@@ -162,56 +159,55 @@ object SpreadsheetParser {
         return out.toByteArray()
     }
 
-    private fun parseXml(bytes: ByteArray): Element {
-        val factory = DocumentBuilderFactory.newInstance()
-        // Sem DTD/entidades externas: o arquivo vem de fora.
-        for ((feature, value) in listOf(
-            "http://apache.org/xml/features/disallow-doctype-decl" to true,
-            "http://xml.org/sax/features/external-general-entities" to false,
-            "http://xml.org/sax/features/external-parameter-entities" to false,
-        )) {
-            try { factory.setFeature(feature, value) } catch (_: Exception) { /* o parser pode não oferecer */ }
+    // O .xlsx é lido com expressões regulares em vez do XML do sistema: o parser do Android não aceita
+    // as mesmas configurações do da JVM, e assim o comportamento é idêntico nos dois (e não expande
+    // entidades externas, só as 5 básicas e as numéricas).
+
+    private val OPT = """(?:\w+:)?"""
+    private val SI = Regex("""<${OPT}si\b[^>]*?(?:/>|>(.*?)</${OPT}si>)""", RegexOption.DOT_MATCHES_ALL)
+    private val TEXT = Regex("""<${OPT}t(?:\s[^>]*)?>(.*?)</${OPT}t>""", RegexOption.DOT_MATCHES_ALL)
+    private val ROW = Regex("""<${OPT}row\b[^>]*?(?:/>|>(.*?)</${OPT}row>)""", RegexOption.DOT_MATCHES_ALL)
+    private val CELL = Regex("""<${OPT}c\b([^>]*?)(?:/>|>(.*?)</${OPT}c>)""", RegexOption.DOT_MATCHES_ALL)
+    private val VALUE = Regex("""<${OPT}v(?:\s[^>]*)?>(.*?)</${OPT}v>""", RegexOption.DOT_MATCHES_ALL)
+    private val INLINE = Regex("""<${OPT}is\b[^>]*>(.*?)</${OPT}is>""", RegexOption.DOT_MATCHES_ALL)
+    private val ENTITY = Regex("""&(#x[0-9A-Fa-f]+|#\d+|amp|lt|gt|quot|apos);""")
+
+    private fun attr(attributes: String, name: String): String =
+        Regex("""(?:^|\s)$name="([^"]*)"""").find(attributes)?.groupValues?.get(1).orEmpty()
+
+    private fun unescape(text: String): String = ENTITY.replace(text) { m ->
+        when (val e = m.groupValues[1]) {
+            "amp" -> "&"
+            "lt" -> "<"
+            "gt" -> ">"
+            "quot" -> "\""
+            "apos" -> "'"
+            else -> {
+                val code = if (e.startsWith("#x")) e.drop(2).toIntOrNull(16) else e.drop(1).toIntOrNull()
+                if (code != null && code in 1..0x10FFFF) String(Character.toChars(code)) else m.value
+            }
         }
-        factory.isXIncludeAware = false
-        factory.isExpandEntityReferences = false
-        return factory.newDocumentBuilder().parse(ByteArrayInputStream(bytes)).documentElement
     }
 
-    private fun Element.children(tag: String): List<Element> {
-        val result = ArrayList<Element>()
-        var node: Node? = firstChild
-        while (node != null) {
-            if (node is Element && (node.localName ?: node.nodeName).substringAfter(':') == tag) result.add(node)
-            node = node.nextSibling
-        }
-        return result
-    }
-
-    private fun Element.descendantText(tag: String): String {
-        val all = getElementsByTagName("*")
-        val sb = StringBuilder()
-        for (i in 0 until all.length) {
-            val e = all.item(i) as Element
-            if ((e.localName ?: e.nodeName).substringAfter(':') == tag) sb.append(e.textContent)
-        }
-        return sb.toString()
-    }
+    private fun joinedText(xml: String): String =
+        TEXT.findAll(xml).joinToString("") { unescape(it.groupValues[1]) }
 
     private fun sharedStrings(xml: ByteArray): List<String> =
-        parseXml(xml).children("si").map { it.descendantText("t") }
+        SI.findAll(String(xml, Charsets.UTF_8)).map { joinedText(it.groupValues[1]) }.toList()
 
     private fun sheetRows(xml: ByteArray, strings: List<String>): List<List<String>> {
-        val root = parseXml(xml)
-        val data = root.children("sheetData").firstOrNull() ?: return emptyList()
+        val text = String(xml, Charsets.UTF_8)
+        val start = Regex("""<${OPT}sheetData\b""").find(text)?.range?.first ?: return emptyList()
         val rows = ArrayList<List<String>>()
-        for (rowEl in data.children("row")) {
+        for (rowMatch in ROW.findAll(text, start)) {
             val cells = ArrayList<String>()
-            for (c in rowEl.children("c")) {
-                val col = columnIndex(c.getAttribute("r"), cells.size)
+            for (c in CELL.findAll(rowMatch.groupValues[1])) {
+                val col = columnIndex(attr(c.groupValues[1], "r"), cells.size)
                 while (cells.size < col) cells.add("")
-                cells.add(cellValue(c, strings))
+                cells.add(cellValue(attr(c.groupValues[1], "t"), c.groupValues[2], strings))
             }
             rows.add(cells)
+            if (rows.size > MAX_ROWS + 1) break
         }
         return rows
     }
@@ -223,12 +219,11 @@ object SpreadsheetParser {
         return letters.fold(0) { acc, ch -> acc * 26 + (ch - 'A' + 1) } - 1
     }
 
-    private fun cellValue(c: Element, strings: List<String>): String {
-        val type = c.getAttribute("t")
-        val v = c.children("v").firstOrNull()?.textContent.orEmpty()
+    private fun cellValue(type: String, body: String, strings: List<String>): String {
+        val v = VALUE.find(body)?.groupValues?.get(1)?.let(::unescape).orEmpty()
         return when (type) {
             "s" -> strings.getOrNull(v.trim().toIntOrNull() ?: -1).orEmpty()
-            "inlineStr" -> c.children("is").firstOrNull()?.descendantText("t").orEmpty()
+            "inlineStr" -> INLINE.find(body)?.let { joinedText(it.groupValues[1]) }.orEmpty()
             "str", "e", "b" -> v
             else -> numeric(v)
         }

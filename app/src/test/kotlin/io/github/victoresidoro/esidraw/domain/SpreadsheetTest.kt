@@ -75,3 +75,28 @@ class SpreadsheetTest {
         SpreadsheetParser.parse(zip)
     }
 }
+
+class SpreadsheetXmlTest {
+    private fun zipOf(sheet: String, shared: String? = null): ByteArray {
+        val out = java.io.ByteArrayOutputStream()
+        java.util.zip.ZipOutputStream(out).use { z ->
+            fun put(n: String, c: String) { z.putNextEntry(java.util.zip.ZipEntry(n)); z.write(c.toByteArray()); z.closeEntry() }
+            shared?.let { put("xl/sharedStrings.xml", it) }
+            put("xl/worksheets/sheet1.xml", sheet)
+        }
+        return out.toByteArray()
+    }
+
+    @Test
+    fun `entidades, texto rico, celula vazia e prefixo de namespace`() {
+        val shared = """<sst><si><t>Nome</t></si><si><t>Telefone</t></si>""" +
+            """<si><r><t xml:space="preserve">Jo&#227;o </t></r><r><t>&amp; Maria</t></r></si></sst>"""
+        val sheet = """<worksheet><sheetData>""" +
+            """<row r="1"><c r="A1" t="s"><v>0</v></c><c r="B1" t="s"><v>1</v></c></row>""" +
+            """<row r="2"><c r="A2" t="s"><v>2</v></c><c r="B2"><v>5.531999990001E12</v></c></row>""" +
+            """<row r="3"><c r="A3" s="1"/><c r="C3" t="inlineStr"><is><t>x</t></is></c></row>""" +
+            """</sheetData></worksheet>"""
+        val entries = SpreadsheetParser.parse(zipOf(sheet, shared))
+        assertEquals(listOf(ListEntry("João & Maria", "5531999990001")), entries)
+    }
+}

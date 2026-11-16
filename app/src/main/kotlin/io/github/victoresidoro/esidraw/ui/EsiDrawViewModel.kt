@@ -155,8 +155,8 @@ class EsiDrawViewModel(private val repository: EsiDrawRepository) : ViewModel() 
                 }
             } catch (e: SpreadsheetException) {
                 return@launch notify(e.message ?: "Não consegui ler a planilha.")
-            } catch (_: Exception) {
-                return@launch notify("Não consegui ler a planilha. Use o modelo do EsiDraw (.xlsx) ou um .csv.")
+            } catch (e: Exception) {
+                return@launch notify("Não consegui ler a planilha (${e.javaClass.simpleName}). Use o modelo do EsiDraw (.xlsx) ou um .csv.")
             }
             if (entries.isEmpty()) return@launch notify("Não encontrei ninguém na planilha.")
             importContacts(entries.map { ImportedContact(it.name, it.phone) })
