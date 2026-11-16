@@ -34,6 +34,30 @@ interface EsiDrawDao {
     @Query("DELETE FROM participant WHERE id = :id")
     suspend fun deleteParticipant(id: Long)
 
+    @Query("SELECT * FROM draw_history ORDER BY createdAt DESC, id DESC")
+    fun observeHistory(): Flow<List<DrawHistoryEntity>>
+
+    @Query("SELECT * FROM draw_history_entry ORDER BY giverName COLLATE NOCASE, id")
+    fun observeHistoryEntries(): Flow<List<DrawHistoryEntryEntity>>
+
+    @Insert
+    suspend fun insertHistory(history: DrawHistoryEntity): Long
+
+    @Insert
+    suspend fun insertHistoryEntries(entries: List<DrawHistoryEntryEntity>)
+
+    @Query("SELECT id FROM draw_history ORDER BY createdAt DESC, id DESC LIMIT 1")
+    suspend fun latestHistoryId(): Long?
+
+    @Query("DELETE FROM draw_history_entry WHERE drawId = :drawId")
+    suspend fun deleteHistoryEntries(drawId: Long)
+
+    @Query("UPDATE draw_history SET guarantee = :guarantee WHERE id = :drawId")
+    suspend fun setHistoryGuarantee(drawId: Long, guarantee: String)
+
+    @Query("DELETE FROM draw_history WHERE id = :drawId")
+    suspend fun deleteHistory(drawId: Long)
+
     @Query("DELETE FROM participant")
     suspend fun deleteAllParticipants()
 

@@ -232,17 +232,10 @@ fun DrawDispatchScreen(
         )
     }
     if (showPeek) {
-        AlertDialog(
-            onDismissRequest = { showPeek = false },
-            title = { Text("Resultado") },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    assigned.forEach { s ->
-                        Text("${s.participant.name} → ${s.receiverId?.let { byId[it]?.participant?.name } ?: "?"}")
-                    }
-                }
-            },
-            confirmButton = { TextButton(onClick = { showPeek = false }) { Text("Fechar") } },
+        FullResultDialog(
+            title = "Sorteio atual",
+            lines = assigned.map { it.participant.name to (it.receiverId?.let { id -> byId[id]?.participant?.name } ?: "?") },
+            onDismiss = { showPeek = false },
         )
     }
 

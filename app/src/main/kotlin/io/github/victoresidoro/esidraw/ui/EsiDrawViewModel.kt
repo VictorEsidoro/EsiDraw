@@ -13,6 +13,7 @@ import io.github.victoresidoro.esidraw.domain.engine.DrawEngine
 import io.github.victoresidoro.esidraw.domain.engine.EditResult
 import io.github.victoresidoro.esidraw.domain.model.AddParticipantResult
 import io.github.victoresidoro.esidraw.domain.model.Contact
+import io.github.victoresidoro.esidraw.domain.model.DrawHistory
 import io.github.victoresidoro.esidraw.domain.model.GroupSummary
 import io.github.victoresidoro.esidraw.domain.model.CycleGuarantee
 import io.github.victoresidoro.esidraw.domain.model.Diagnosis
@@ -41,7 +42,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
-enum class Tab { EVENT, PARTICIPANTS, RULES, DRAW }
+enum class Tab { EVENT, PARTICIPANTS, RULES, DRAW, RESULT }
 
 data class EsiDrawUiState(
     val loaded: Boolean = false,
@@ -49,6 +50,7 @@ data class EsiDrawUiState(
     val participants: List<ParticipantStatus> = emptyList(),
     val rules: DrawRules = DrawRules(),
     val groups: List<GroupSummary> = emptyList(),
+    val history: List<DrawHistory> = emptyList(),
     /** `null` = o sorteio é possível com as regras atuais. */
     val diagnosis: Diagnosis? = null,
     /** Todos os participantes já têm quem tirar. */
@@ -77,13 +79,15 @@ class EsiDrawViewModel(private val repository: EsiDrawRepository) : ViewModel() 
         repository.participants,
         repository.rules,
         repository.groups,
-    ) { event, participants, rules, groups ->
+        repository.history,
+    ) { event, participants, rules, groups, history ->
         EsiDrawUiState(
             loaded = true,
             event = event,
             participants = participants,
             rules = rules,
             groups = groups,
+            history = history,
             diagnosis = engine.analyze(participants.map { it.participant }, rules),
             hasDraw = participants.isNotEmpty() && participants.all { it.receiverId != null },
         )
@@ -382,6 +386,22 @@ class EsiDrawViewModel(private val repository: EsiDrawRepository) : ViewModel() 
             val ok = if (parts.isEmpty()) "" else parts.joinToString("; ").replaceFirstChar { it.uppercase() } +
                 ". Mande mensagem nova só para quem ficou Pendente."
             notify(listOfNotNull(ok.ifEmpty { null }, failure).joinToString(" "))
+        }
+    }
+
+    /**
+     * Apaga um sorteio da lista de resultados. Se for o mais recente e ainda estiver em uso,
+     * o sorteio em uso também é descartado, para poder refazer.
+     */
+    fun deleteDrawHistory(id: Long) {
+        viewModelScope.launch {
+            val s = state.value
+            val discardCurrent = s.drawStarted && s.history.firstOrNull()?.id == id
+            repository.deleteDrawHistory(id, discardCurrent)
+            notify(
+                if (discardCurrent) "Sorteio apagado e descartado. Vá em Sorteio para sortear de novo."
+                else "Sorteio apagado da lista.",
+            )
         }
     }
 

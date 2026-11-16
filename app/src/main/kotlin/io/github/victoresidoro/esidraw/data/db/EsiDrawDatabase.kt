@@ -14,8 +14,10 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         RuleEntity::class,
         GroupEntity::class,
         GroupMemberEntity::class,
+        DrawHistoryEntity::class,
+        DrawHistoryEntryEntity::class,
     ],
-    version = 2,
+    version = 3,
     // Sem exportação: as variantes debug e release do KSP escreviam o mesmo arquivo de esquema e o corrompiam.
     // As migrações são escritas à mão (ver MIGRATION_1_2) e conferidas na instalação por cima.
     exportSchema = false,
@@ -46,9 +48,31 @@ abstract class EsiDrawDatabase : RoomDatabase() {
             }
         }
 
+        /** 0.4.0: histórico de sorteios por data. */
+        private val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `draw_history` " +
+                        "(`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `createdAt` INTEGER NOT NULL, " +
+                        "`guarantee` TEXT NOT NULL)",
+                )
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `draw_history_entry` " +
+                        "(`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `drawId` INTEGER NOT NULL, " +
+                        "`giverId` INTEGER NOT NULL, `giverName` TEXT NOT NULL, `receiverId` INTEGER NOT NULL, " +
+                        "`receiverName` TEXT NOT NULL, FOREIGN KEY(`drawId`) REFERENCES `draw_history`(`id`) " +
+                        "ON UPDATE NO ACTION ON DELETE CASCADE )",
+                )
+                db.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_draw_history_entry_drawId` " +
+                        "ON `draw_history_entry` (`drawId`)",
+                )
+            }
+        }
+
         fun create(context: Context): EsiDrawDatabase =
             Room.databaseBuilder(context, EsiDrawDatabase::class.java, "esidraw.db")
-                .addMigrations(MIGRATION_1_2)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
                 .build()
     }
 }

@@ -2,6 +2,7 @@ package io.github.victoresidoro.esidraw.domain.repository
 
 import io.github.victoresidoro.esidraw.domain.model.AddParticipantResult
 import io.github.victoresidoro.esidraw.domain.model.Contact
+import io.github.victoresidoro.esidraw.domain.model.DrawHistory
 import io.github.victoresidoro.esidraw.domain.model.GroupSummary
 import io.github.victoresidoro.esidraw.domain.model.ImportCounts
 import io.github.victoresidoro.esidraw.domain.model.CycleGuarantee
@@ -20,6 +21,9 @@ interface EsiDrawRepository {
     val participants: Flow<List<ParticipantStatus>>
     val rules: Flow<DrawRules>
     val groups: Flow<List<GroupSummary>>
+
+    /** Sorteios feitos, do mais recente para o mais antigo. */
+    val history: Flow<List<DrawHistory>>
 
     /** Aplica [transform] ao evento atual de forma atômica (várias edições seguidas não se perdem). */
     suspend fun updateEvent(transform: (EventSettings) -> EventSettings)
@@ -68,5 +72,8 @@ interface EsiDrawRepository {
     /** Guarda o resultado do sorteio ([assignments]: quem tira → quem foi tirado). */
     suspend fun saveDraw(assignments: Map<Long, Long>, guarantee: CycleGuarantee)
     suspend fun clearDraw()
+
+    /** Apaga um sorteio guardado. Com [discardCurrent], descarta também o sorteio em uso (para refazer). */
+    suspend fun deleteDrawHistory(id: Long, discardCurrent: Boolean)
     suspend fun setMessageSent(participantId: Long, sent: Boolean)
 }

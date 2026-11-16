@@ -68,6 +68,10 @@ Usar um grupo substitui a lista, as regras e o sorteio atuais (o app pede confir
 
 Toque em **Sortear**. Se as regras tornarem o sorteio impossível, o botão fica desligado e aparece um quadro vermelho dizendo **quem** é o gargalo e **quantas pessoas sem regras** precisam entrar para funcionar.
 
+### Aba Resultado
+
+Cada sorteio fica guardado com a data. Em **Resultado** você vê a conferência automática (todos têm par, todos foram sorteados, ninguém saiu duas vezes, ninguém tirou a si mesmo, regras respeitadas), abre o resultado completo e pode **apagar** um sorteio. Se o sorteio for o que está em uso, apagar também o descarta, e aí é só sortear de novo na aba Sorteio. Se você participa do sorteio, ver o resultado pede confirmação.
+
 ### Alguém entrou ou saiu depois do sorteio
 
 Não precisa refazer tudo:

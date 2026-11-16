@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.DateRange
 import androidx.compose.material.icons.outlined.Favorite
 import androidx.compose.material.icons.outlined.Lock
@@ -28,6 +29,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.victoresidoro.esidraw.ui.screens.DrawDispatchScreen
 import io.github.victoresidoro.esidraw.ui.screens.EventScreen
 import io.github.victoresidoro.esidraw.ui.screens.ParticipantsScreen
+import io.github.victoresidoro.esidraw.ui.screens.ResultScreen
 import io.github.victoresidoro.esidraw.ui.screens.RulesScreen
 
 private data class TabItem(val tab: Tab, val label: String, val icon: ImageVector)
@@ -37,6 +39,7 @@ private val tabs = listOf(
     TabItem(Tab.PARTICIPANTS, "Pessoas", Icons.Outlined.Person),
     TabItem(Tab.RULES, "Regras", Icons.Outlined.Lock),
     TabItem(Tab.DRAW, "Sorteio", Icons.Outlined.Favorite),
+    TabItem(Tab.RESULT, "Resultado", Icons.Outlined.CheckCircle),
 )
 
 @Composable
@@ -104,6 +107,10 @@ fun EsiDrawApp(viewModel: EsiDrawViewModel) {
                         onIncludePending = viewModel::includePending,
                         onSetSent = viewModel::setMessageSent,
                         onMessage = viewModel::notify,
+                    )
+                    Tab.RESULT -> ResultScreen(
+                        state = state,
+                        onDelete = viewModel::deleteDrawHistory,
                     )
                 }
             }

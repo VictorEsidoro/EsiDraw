@@ -2,6 +2,8 @@ package io.github.victoresidoro.esidraw.data.repo
 
 import androidx.room.withTransaction
 import io.github.victoresidoro.esidraw.data.db.EsiDrawDatabase
+import io.github.victoresidoro.esidraw.data.db.DrawHistoryEntity
+import io.github.victoresidoro.esidraw.data.db.DrawHistoryEntryEntity
 import io.github.victoresidoro.esidraw.data.db.EventEntity
 import io.github.victoresidoro.esidraw.data.db.GroupEntity
 import io.github.victoresidoro.esidraw.data.db.GroupMemberEntity
@@ -13,6 +15,8 @@ import io.github.victoresidoro.esidraw.domain.model.Contact
 import io.github.victoresidoro.esidraw.domain.model.CycleGuarantee
 import io.github.victoresidoro.esidraw.domain.model.GroupSummary
 import io.github.victoresidoro.esidraw.domain.model.ImportCounts
+import io.github.victoresidoro.esidraw.domain.model.DrawHistory
+import io.github.victoresidoro.esidraw.domain.model.DrawHistoryEntry
 import io.github.victoresidoro.esidraw.domain.model.DrawRules
 import io.github.victoresidoro.esidraw.domain.model.EventSettings
 import io.github.victoresidoro.esidraw.domain.model.Pairing
@@ -20,6 +24,7 @@ import io.github.victoresidoro.esidraw.domain.model.Participant
 import io.github.victoresidoro.esidraw.domain.model.ParticipantStatus
 import io.github.victoresidoro.esidraw.domain.repository.EsiDrawRepository
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 
 class RoomEsiDrawRepository(private val db: EsiDrawDatabase) : EsiDrawRepository {
@@ -39,6 +44,21 @@ class RoomEsiDrawRepository(private val db: EsiDrawDatabase) : EsiDrawRepository
 
     override val groups: Flow<List<GroupSummary>> =
         dao.observeGroups().map { rows -> rows.map { GroupSummary(it.id, it.name, it.memberCount) } }
+
+    override val history: Flow<List<DrawHistory>> =
+        combine(dao.observeHistory(), dao.observeHistoryEntries()) { draws, entries ->
+            val byDraw = entries.groupBy { it.drawId }
+            draws.map { d ->
+                DrawHistory(
+                    id = d.id,
+                    createdAt = d.createdAt,
+                    guarantee = runCatching { CycleGuarantee.valueOf(d.guarantee) }.getOrDefault(CycleGuarantee.NONE),
+                    entries = byDraw[d.id].orEmpty().map {
+                        DrawHistoryEntry(it.giverId, it.giverName, it.receiverId, it.receiverName)
+                    },
+                )
+            }
+        }
 
     override suspend fun updateEvent(transform: (EventSettings) -> EventSettings) {
         db.withTransaction { writeEvent(transform) }
@@ -121,6 +141,7 @@ class RoomEsiDrawRepository(private val db: EsiDrawDatabase) : EsiDrawRepository
             // setReceiver também zera o "enviado": só quem mudou precisa de mensagem nova.
             changedGivers.forEach { giver -> assignments[giver]?.let { dao.setReceiver(giver, it) } }
             writeEvent { it.copy(cycleGuarantee = guarantee) }
+            recordHistory(guarantee, newEntry = false)
         }
     }
 
@@ -158,6 +179,41 @@ class RoomEsiDrawRepository(private val db: EsiDrawDatabase) : EsiDrawRepository
             dao.clearDraw()
             assignments.forEach { (giver, receiver) -> dao.setReceiver(giver, receiver) }
             writeEvent { it.copy(cycleGuarantee = guarantee) }
+            recordHistory(guarantee, newEntry = true)
+        }
+    }
+
+    /** Guarda o sorteio atual (por nome) no histórico; ajustes editam o registro mais recente. */
+    private suspend fun recordHistory(guarantee: CycleGuarantee, newEntry: Boolean) {
+        val people = dao.getParticipants()
+        val names = people.associate { it.id to it.name }
+        val rows = people.filter { it.receiverId != null }
+        val existing = if (newEntry) null else dao.latestHistoryId()
+        val drawId = existing ?: dao.insertHistory(
+            DrawHistoryEntity(createdAt = System.currentTimeMillis(), guarantee = guarantee.name),
+        )
+        if (existing != null) {
+            dao.deleteHistoryEntries(drawId)
+            dao.setHistoryGuarantee(drawId, guarantee.name)
+        }
+        dao.insertHistoryEntries(
+            rows.map { p ->
+                val receiver = checkNotNull(p.receiverId)
+                DrawHistoryEntryEntity(
+                    drawId = drawId,
+                    giverId = p.id,
+                    giverName = p.name,
+                    receiverId = receiver,
+                    receiverName = names[receiver].orEmpty(),
+                )
+            },
+        )
+    }
+
+    override suspend fun deleteDrawHistory(id: Long, discardCurrent: Boolean) {
+        db.withTransaction {
+            dao.deleteHistory(id) // as linhas saem junto (ON DELETE CASCADE)
+            if (discardCurrent) discardDraw()
         }
     }
 

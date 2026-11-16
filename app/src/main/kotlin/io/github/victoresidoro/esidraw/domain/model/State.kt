@@ -33,3 +33,19 @@ data class Contact(val name: String, val phone: String)
 data class GroupSummary(val id: Long, val name: String, val memberCount: Int)
 
 data class ImportCounts(val added: Int, val duplicates: Int)
+
+/** Uma linha de um sorteio guardado: quem tirou quem (por nome, como estava na data). */
+data class DrawHistoryEntry(
+    val giverId: Long,
+    val giverName: String,
+    val receiverId: Long,
+    val receiverName: String,
+)
+
+/** Um sorteio feito em [createdAt] (milissegundos desde 1970). */
+data class DrawHistory(
+    val id: Long,
+    val createdAt: Long,
+    val guarantee: CycleGuarantee,
+    val entries: List<DrawHistoryEntry>,
+)

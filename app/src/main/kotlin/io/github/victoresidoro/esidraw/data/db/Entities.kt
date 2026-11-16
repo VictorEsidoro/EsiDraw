@@ -90,3 +90,32 @@ data class GroupMemberEntity(
 
 /** Resultado da consulta que junta cada grupo com a contagem de membros. */
 data class GroupSummaryRow(val id: Long, val name: String, val memberCount: Int)
+
+/** Um sorteio feito, guardado com a data para consulta e para apagar/refazer. Guarda nomes, não telefones. */
+@Entity(tableName = "draw_history")
+data class DrawHistoryEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val createdAt: Long,
+    val guarantee: String,
+)
+
+@Entity(
+    tableName = "draw_history_entry",
+    foreignKeys = [
+        ForeignKey(
+            entity = DrawHistoryEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["drawId"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+    ],
+    indices = [Index(value = ["drawId"])],
+)
+data class DrawHistoryEntryEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val drawId: Long,
+    val giverId: Long,
+    val giverName: String,
+    val receiverId: Long,
+    val receiverName: String,
+)

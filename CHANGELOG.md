@@ -5,6 +5,19 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ## [Não lançado]
 
+## [0.4.0] - 2026-11-16
+
+### Adicionado
+
+- **Aba Resultado:** cada sorteio feito fica guardado com data e hora (do mais recente ao mais antigo). Cada um mostra a conferência, abre o **resultado completo em tela cheia com rolagem** e pode ser **apagado**. Apagar o sorteio em uso também o descarta, para refazer.
+- **Validação automática** (`DrawValidator`), independente do motor: todos têm alguém para presentear, todos foram sorteados, ninguém saiu duas vezes, ninguém tirou a si mesmo, só gente da lista, bloqueios e pares fixos respeitados, e o tipo de ciclo. O sorteio em uso é conferido com os mesmos dados das mensagens.
+- Banco versão 3 (histórico de sorteios), com migração a partir da versão 2. O histórico guarda nomes, não telefones.
+- Testes do validador, incluindo 300 sorteios de 33 pessoas feitos pelo motor.
+
+### Corrigido
+
+- O resultado na aba Sorteio ficava cortado quando a lista era longa (33 pessoas): agora abre em tela cheia e rola.
+
 ## [0.3.0] - 2026-11-16
 
 ### Adicionado
