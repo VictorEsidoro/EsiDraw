@@ -80,6 +80,7 @@ fun EsiDrawApp(viewModel: EsiDrawViewModel) {
                         onAdd = { name, phone, onDone -> viewModel.addParticipant(name, phone, onDone) },
                         onImport = viewModel::importContacts,
                         onImportText = viewModel::importText,
+                        onImportSpreadsheet = viewModel::importSpreadsheet,
                         onUpdate = { id, name, phone, onDone -> viewModel.updateParticipant(id, name, phone, onDone) },
                         onRemove = viewModel::removeParticipant,
                         onSaveGroup = { name, onDone -> viewModel.saveGroup(name, onDone) },
@@ -100,6 +101,7 @@ fun EsiDrawApp(viewModel: EsiDrawViewModel) {
                         state = state,
                         onDraw = viewModel::runDraw,
                         onClearDraw = viewModel::clearDraw,
+                        onIncludePending = viewModel::includePending,
                         onSetSent = viewModel::setMessageSent,
                         onMessage = viewModel::notify,
                     )

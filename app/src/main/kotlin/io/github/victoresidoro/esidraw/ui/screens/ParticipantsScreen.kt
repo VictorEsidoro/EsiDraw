@@ -42,8 +42,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import io.github.victoresidoro.esidraw.data.sheet.XlsxTemplate
 import io.github.victoresidoro.esidraw.data.vcard.ImportedContact
 import io.github.victoresidoro.esidraw.domain.model.GroupSummary
 import io.github.victoresidoro.esidraw.domain.model.ParticipantStatus
@@ -59,6 +61,7 @@ fun ParticipantsScreen(
     onAdd: (name: String, phone: String, onDone: () -> Unit) -> Unit,
     onImport: (List<ImportedContact>) -> Unit,
     onImportText: (String) -> Unit,
+    onImportSpreadsheet: (open: () -> java.io.InputStream?) -> Unit,
     onUpdate: (id: Long, name: String, phone: String, onDone: () -> Unit) -> Unit,
     onRemove: (Long) -> Unit,
     onSaveGroup: (name: String, onDone: () -> Unit) -> Unit,
@@ -82,6 +85,21 @@ fun ParticipantsScreen(
 
     val askPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         if (granted) pickerOpen = true else onMessage("Sem permissão da agenda. Você ainda pode digitar ou colar uma lista.")
+    }
+
+    val saveTemplate = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument(XlsxTemplate.MIME)) { uri ->
+        if (uri != null) {
+            val saved = runCatching {
+                context.contentResolver.openOutputStream(uri)?.use { it.write(XlsxTemplate.build()) } != null
+            }.getOrDefault(false)
+            onMessage(
+                if (saved) "Modelo salvo. Preencha Nome e Telefone e use Importar planilha."
+                else "Não consegui salvar o modelo.",
+            )
+        }
+    }
+    val pickSheet = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) onImportSpreadsheet { context.contentResolver.openInputStream(uri) }
     }
 
     LazyColumn(
@@ -132,6 +150,23 @@ fun ParticipantsScreen(
                     ) { Text("Da agenda") }
                     OutlinedButton(onClick = { pasteOpen = true }, modifier = Modifier.weight(1f)) { Text("Colar lista") }
                 }
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    OutlinedButton(
+                        onClick = { saveTemplate.launch(XlsxTemplate.FILE_NAME) },
+                        modifier = Modifier.weight(1f),
+                    ) { Text("Baixar modelo") }
+                    OutlinedButton(
+                        onClick = { pickSheet.launch(arrayOf("*/*")) },
+                        modifier = Modifier.weight(1f),
+                    ) { Text("Importar planilha") }
+                }
+                Text(
+                    "Planilha: baixe o modelo (.xlsx), preencha Nome e Telefone no Excel ou no Google Planilhas, " +
+                        "salve no celular ou no Drive e importe. Aceita também .csv.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Justify,
+                )
             }
         }
 
@@ -142,6 +177,7 @@ fun ParticipantsScreen(
                         "crie um rótulo no Google Contatos, ou marque todos de uma vez em Da agenda. " +
                         "Também dá para compartilhar contatos direto para o EsiDraw.",
                     style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Justify,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
@@ -153,6 +189,7 @@ fun ParticipantsScreen(
                     "Salve a lista como um grupo (ex.: Grupo da Alegria). No ano seguinte, carregue o grupo, " +
                         "edite quem entrou, saiu ou trocou de telefone, e atualize o grupo.",
                     style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Justify,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 RoundedTextField(
@@ -197,6 +234,7 @@ fun ParticipantsScreen(
                         "Toque em uma pessoa para editar o nome ou o telefone."
                     },
                     style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Justify,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
@@ -244,7 +282,7 @@ fun ParticipantsScreen(
         AlertDialog(
             onDismissRequest = { confirmLoad = null },
             title = { Text("Usar o grupo ${group.name}?") },
-            text = { Text("A lista atual, as regras e o sorteio serão substituídos pelas ${group.memberCount} pessoas do grupo.") },
+            text = { Text("A lista atual, as regras e o sorteio serão substituídos pelas ${group.memberCount} pessoas do grupo.", textAlign = TextAlign.Justify) },
             confirmButton = {
                 TextButton(onClick = {
                     confirmLoad = null
@@ -258,7 +296,7 @@ fun ParticipantsScreen(
         AlertDialog(
             onDismissRequest = { confirmUpdate = null },
             title = { Text("Atualizar ${group.name}?") },
-            text = { Text("Os membros do grupo passam a ser as ${participants.size} pessoas da lista atual.") },
+            text = { Text("Os membros do grupo passam a ser as ${participants.size} pessoas da lista atual.", textAlign = TextAlign.Justify) },
             confirmButton = {
                 TextButton(onClick = {
                     confirmUpdate = null
@@ -272,7 +310,7 @@ fun ParticipantsScreen(
         AlertDialog(
             onDismissRequest = { confirmDelete = null },
             title = { Text("Excluir ${group.name}?") },
-            text = { Text("Só o grupo salvo some. A lista atual não muda.") },
+            text = { Text("Só o grupo salvo some. A lista atual não muda.", textAlign = TextAlign.Justify) },
             confirmButton = {
                 TextButton(onClick = {
                     confirmDelete = null

@@ -45,6 +45,7 @@ Preencha as abas da esquerda para a direita (veja a tabela abaixo). Quando tudo 
 
 - **Digitando:** nome e telefone com DDD, por exemplo `(31) 98888-7777`.
 - **Da agenda:** toque em **Da agenda**. O app pede permissão de leitura da agenda só nesse momento. Use a busca, escolha um **rótulo** do Google Contatos para ver só aquele grupo, toque em **Marcar todos** e depois em **Importar**.
+- **Planilha:** toque em **Baixar modelo**, salve o arquivo, preencha **Nome** e **Telefone** no Excel ou no Google Planilhas e salve no celular ou no Drive. Depois toque em **Importar planilha** e escolha o arquivo. Se a planilha for do Google, use *Arquivo > Fazer download > Microsoft Excel (.xlsx)* antes de importar. Também funciona com `.csv`.
 - **Colar lista:** cole um texto com uma pessoa por linha, por exemplo `Maria Silva - (31) 98888-7777`.
 - **Pelo WhatsApp:** nos dados do contato, use a opção de compartilhar o contato e escolha **EsiDraw**. Vários contatos de uma vez também funcionam. Contatos sem telefone com DDD são avisados e não entram na lista.
 
@@ -67,6 +68,17 @@ Usar um grupo substitui a lista, as regras e o sorteio atuais (o app pede confir
 
 Toque em **Sortear**. Se as regras tornarem o sorteio impossível, o botão fica desligado e aparece um quadro vermelho dizendo **quem** é o gargalo e **quantas pessoas sem regras** precisam entrar para funcionar.
 
+### Alguém entrou ou saiu depois do sorteio
+
+Não precisa refazer tudo:
+
+- **Entrou alguém:** adicione a pessoa normalmente em Pessoas. Em **Sorteio**, ela aparece em *Entrou depois do sorteio*; toque em **Incluir no sorteio**. O app encaixa a pessoa no sorteio que já existe e avisa quem ganhou resultado novo (normalmente 1 pessoa). Mande mensagem nova só para quem ficar **Pendente**.
+- **Saiu alguém:** remova a pessoa em Pessoas. Quem a tirava passa a tirar quem ela tinha tirado (se uma regra impedir, o app ajusta mais uma pessoa) e avisa a quem mandar mensagem nova.
+- **Mudou o telefone:** toque na pessoa e corrija; o sorteio não muda.
+- **Não deu para encaixar:** o app avisa. Use **Refazer sorteio**.
+
+Mudar bloqueios ou pares forçados continua apagando o sorteio, porque o resultado pode deixar de valer.
+
 ### Entregar o resultado
 
 Na lista **Entrega individual**, cada pessoa tem o status **Pendente** ou **Enviado** e duas opções:
@@ -88,9 +100,10 @@ Tudo fica **só no seu celular** (banco local). O aplicativo não tem acesso à 
 |---|---|
 | "Telefone inválido" | Informe DDD + número, por exemplo `(31) 98888-7777`. Números sem DDD não são aceitos. |
 | O botão **Sortear** está desligado | Leia o quadro vermelho do diagnóstico: ele diz quem está causando o problema e quantas pessoas faltam. |
-| O sorteio foi descartado | Mudar participantes ou regras apaga o sorteio anterior, porque o resultado deixaria de valer. Sorteie de novo. |
+| O sorteio foi descartado | Mudar bloqueios ou pares forçados apaga o sorteio anterior, porque o resultado deixaria de valer. Sorteie de novo. Adicionar ou remover pessoas não apaga: veja *Alguém entrou ou saiu depois do sorteio*. |
 | O WhatsApp não abriu | Confira se o WhatsApp (ou WhatsApp Business) está instalado. Sem ele, o link abre no navegador. |
 | Quero marcar muitos contatos do WhatsApp | Salve-os na agenda com um rótulo no Google Contatos (ex.: Amigo oculto 2026) e filtre por ele em **Da agenda**. |
+| A planilha não importou | Use o modelo do app (.xlsx) ou um .csv com **Nome** e **Telefone**. Planilha nativa do Google precisa ser baixada como .xlsx antes. Telefones sem DDD são listados no aviso. |
 | Compartilhei um contato e nada entrou | Provavelmente ele não tem telefone com DDD. O app avisa o nome do contato na mensagem que aparece na parte de baixo. |
 | Quero que eu mesmo não saiba o resultado | Use **Revelar aqui** em vez de **WhatsApp**. |
 

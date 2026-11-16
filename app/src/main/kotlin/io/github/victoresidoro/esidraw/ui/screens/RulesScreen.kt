@@ -25,6 +25,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import io.github.victoresidoro.esidraw.domain.model.DrawRules
 import io.github.victoresidoro.esidraw.domain.model.Pairing
@@ -62,6 +63,7 @@ fun RulesScreen(
             Text(
                 "Cadastre pelo menos 2 participantes para criar regras.",
                 style = MaterialTheme.typography.bodyMedium,
+                textAlign = TextAlign.Justify,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             return@Column
@@ -71,13 +73,14 @@ fun RulesScreen(
             Text(
                 "A primeira pessoa NÃO pode tirar a segunda.",
                 style = MaterialTheme.typography.bodyMedium,
+                textAlign = TextAlign.Justify,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             PersonPicker("Quem tira", people, blockGiver, { blockGiver = it }, Modifier.fillMaxWidth(), excludeId = blockReceiver)
             PersonPicker("Não pode tirar", people, blockReceiver, { blockReceiver = it }, Modifier.fillMaxWidth(), excludeId = blockGiver)
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Checkbox(checked = bothWays, onCheckedChange = { bothWays = it })
-                Text("Nos dois sentidos", style = MaterialTheme.typography.bodyMedium)
+
             }
             Button(
                 enabled = blockGiver != null && blockReceiver != null,
@@ -109,6 +112,7 @@ fun RulesScreen(
             Text(
                 "A primeira pessoa TEM que tirar a segunda. Cada pessoa só pode ser tirada por uma.",
                 style = MaterialTheme.typography.bodyMedium,
+                textAlign = TextAlign.Justify,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             PersonPicker("Quem tira", people, forcedGiver, { forcedGiver = it }, Modifier.fillMaxWidth(), excludeId = forcedReceiver)

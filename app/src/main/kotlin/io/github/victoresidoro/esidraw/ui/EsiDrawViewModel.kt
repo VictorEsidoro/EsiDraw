@@ -6,7 +6,11 @@ import androidx.lifecycle.viewModelScope
 import io.github.victoresidoro.esidraw.data.vcard.ImportedContact
 import io.github.victoresidoro.esidraw.data.vcard.VCardParser
 import io.github.victoresidoro.esidraw.data.vcard.VCardParser.toImported
+import io.github.victoresidoro.esidraw.data.sheet.SpreadsheetException
+import io.github.victoresidoro.esidraw.data.sheet.SpreadsheetParser
+import io.github.victoresidoro.esidraw.domain.engine.DrawEditor
 import io.github.victoresidoro.esidraw.domain.engine.DrawEngine
+import io.github.victoresidoro.esidraw.domain.engine.EditResult
 import io.github.victoresidoro.esidraw.domain.model.AddParticipantResult
 import io.github.victoresidoro.esidraw.domain.model.Contact
 import io.github.victoresidoro.esidraw.domain.model.GroupSummary
@@ -50,12 +54,22 @@ data class EsiDrawUiState(
     /** Todos os participantes já têm quem tirar. */
     val hasDraw: Boolean = false,
 ) {
+    /** Quem já tem resultado no sorteio. */
+    val assigned: List<ParticipantStatus> get() = participants.filter { it.receiverId != null }
+
+    /** O sorteio já foi feito (mesmo que haja gente que entrou depois dele). */
+    val drawStarted: Boolean get() = participants.any { it.receiverId != null }
+
+    /** Quem entrou depois do sorteio e ainda não foi encaixado nele. */
+    val pending: List<ParticipantStatus> get() = if (drawStarted) participants.filter { it.receiverId == null } else emptyList()
+
     fun nameOf(id: Long): String = participants.firstOrNull { it.participant.id == id }?.participant?.name ?: "?"
 }
 
 class EsiDrawViewModel(private val repository: EsiDrawRepository) : ViewModel() {
 
     private val engine = DrawEngine()
+    private val editor = DrawEditor()
     private val eventLock = Mutex()
 
     val state: StateFlow<EsiDrawUiState> = combine(
@@ -104,12 +118,12 @@ class EsiDrawViewModel(private val repository: EsiDrawRepository) : ViewModel() 
         val phone = PhoneNumber.normalize(rawPhone)
             ?: return notify("Telefone inválido. Informe DDD + número, ex.: (31) 98888-7777.")
         viewModelScope.launch {
-            val hadDraw = state.value.hasDraw
+            val started = state.value.drawStarted
             when (repository.addParticipant(cleanName, phone)) {
                 AddParticipantResult.DUPLICATE -> notify("$cleanName já está na lista com esse telefone.")
                 AddParticipantResult.ADDED -> {
                     onDone()
-                    notify(if (hadDraw) DRAW_DISCARDED else "$cleanName adicionado(a).")
+                    notify(if (started) "$cleanName entrou fora do sorteio. $INCLUDE_HINT" else "$cleanName adicionado(a).")
                 }
             }
         }
@@ -130,9 +144,28 @@ class EsiDrawViewModel(private val repository: EsiDrawRepository) : ViewModel() 
         importContacts(entries.map { ImportedContact(it.name, it.phone) })
     }
 
+    /** Planilha (.xlsx do modelo do app ou .csv) com nome e telefone. */
+    fun importSpreadsheet(open: () -> java.io.InputStream?) {
+        viewModelScope.launch {
+            val entries = try {
+                // Em IO: o arquivo pode estar no Drive e demorar para baixar.
+                withContext(Dispatchers.IO) {
+                    val stream = open() ?: throw SpreadsheetException("Não consegui abrir o arquivo.")
+                    SpreadsheetParser.parse(stream.use { SpreadsheetParser.readLimited(it) })
+                }
+            } catch (e: SpreadsheetException) {
+                return@launch notify(e.message ?: "Não consegui ler a planilha.")
+            } catch (_: Exception) {
+                return@launch notify("Não consegui ler a planilha. Use o modelo do EsiDraw (.xlsx) ou um .csv.")
+            }
+            if (entries.isEmpty()) return@launch notify("Não encontrei ninguém na planilha.")
+            importContacts(entries.map { ImportedContact(it.name, it.phone) })
+        }
+    }
+
     fun importContacts(contacts: List<ImportedContact>) {
         viewModelScope.launch {
-            val hadDraw = state.value.hasDraw
+            val started = state.value.drawStarted
             val valid = mutableListOf<Contact>()
             val withoutPhone = mutableListOf<String>()
             for (contact in contacts) {
@@ -150,7 +183,7 @@ class EsiDrawViewModel(private val repository: EsiDrawRepository) : ViewModel() 
                 if (withoutPhone.isNotEmpty()) add("sem telefone com DDD: ${withoutPhone.joinToString(", ")}")
             }
             val summary = parts.joinToString("; ").replaceFirstChar { it.uppercase() } + "."
-            notify(if (hadDraw && counts.added > 0) "$summary $DRAW_DISCARDED" else summary)
+            notify(if (started && counts.added > 0) "$summary $INCLUDE_HINT" else summary)
         }
     }
 
@@ -206,9 +239,28 @@ class EsiDrawViewModel(private val repository: EsiDrawRepository) : ViewModel() 
 
     fun removeParticipant(id: Long) {
         viewModelScope.launch {
-            val hadDraw = state.value.hasDraw
-            repository.removeParticipant(id)
-            if (hadDraw) notify(DRAW_DISCARDED)
+            val s = state.value
+            val target = s.participants.firstOrNull { it.participant.id == id } ?: return@launch
+            // Sem sorteio, ou pessoa que ainda estava fora dele: sai direto, sem mexer em ninguém.
+            if (!s.drawStarted || target.receiverId == null) {
+                repository.removeParticipant(id)
+                return@launch
+            }
+            val current = s.assigned.associate { it.participant.id to checkNotNull(it.receiverId) }
+            val rules = DrawRules(
+                blocks = s.rules.blocks.filterNot { it.giverId == id || it.receiverId == id }.toSet(),
+                forced = s.rules.forced.filterNot { it.giverId == id || it.receiverId == id }.toSet(),
+            )
+            val name = target.participant.name
+            when (val result = withContext(Dispatchers.Default) { editor.remove(rules, current, id) }) {
+                is EditResult.Success -> {
+                    repository.applyDrawEdit(id, result.assignments, result.changedGivers, result.cycleGuarantee)
+                    val resend = result.changedGivers.map(s::nameOf).sorted()
+                    notify("$name saiu do sorteio. Mande mensagem nova só para: ${resend.joinToString(", ")}.")
+                }
+                is EditResult.Failure ->
+                    notify("Não dá para tirar $name sem mexer em muita gente: ${result.reason} Use Refazer sorteio e depois remova.")
+            }
         }
     }
 
@@ -294,6 +346,45 @@ class EsiDrawViewModel(private val repository: EsiDrawRepository) : ViewModel() 
         }
     }
 
+    /** Encaixa no sorteio pronto quem entrou depois, mexendo no mínimo de gente. */
+    fun includePending() {
+        viewModelScope.launch {
+            val s = state.value
+            val pending = s.pending
+            if (!s.drawStarted || pending.isEmpty()) return@launch
+            var current = s.assigned.associate { it.participant.id to checkNotNull(it.receiverId) }
+            val changed = linkedSetOf<Long>()
+            var level = s.event.cycleGuarantee ?: CycleGuarantee.NONE
+            val included = mutableListOf<Long>()
+            var failure: String? = null
+            for (p in pending) {
+                val id = p.participant.id
+                when (val r = withContext(Dispatchers.Default) { editor.insert(s.rules, current, id) }) {
+                    is EditResult.Success -> {
+                        current = r.assignments
+                        changed += r.changedGivers
+                        level = r.cycleGuarantee
+                        included += id
+                    }
+                    is EditResult.Failure -> {
+                        failure = "Não consegui encaixar ${p.participant.name}: ${r.reason} Use Refazer sorteio."
+                        break
+                    }
+                }
+            }
+            if (included.isNotEmpty()) repository.applyDrawEdit(null, current, changed, level)
+            val oldChanged = (changed - included.toSet()).map(s::nameOf).sorted()
+            val newOnes = included.map(s::nameOf).sorted()
+            val parts = buildList {
+                if (newOnes.isNotEmpty()) add("${newOnes.joinToString(", ")} entrou(entraram) no sorteio")
+                if (oldChanged.isNotEmpty()) add("o resultado de ${oldChanged.joinToString(", ")} mudou")
+            }
+            val ok = if (parts.isEmpty()) "" else parts.joinToString("; ").replaceFirstChar { it.uppercase() } +
+                ". Mande mensagem nova só para quem ficou Pendente."
+            notify(listOfNotNull(ok.ifEmpty { null }, failure).joinToString(" "))
+        }
+    }
+
     fun clearDraw() {
         viewModelScope.launch { repository.clearDraw() }
     }
@@ -303,6 +394,8 @@ class EsiDrawViewModel(private val repository: EsiDrawRepository) : ViewModel() 
     }
 
     companion object {
+        private const val INCLUDE_HINT = "Vá em Sorteio e toque em Incluir no sorteio."
+
         private const val DRAW_DISCARDED =
             "O sorteio anterior foi descartado porque os participantes ou as regras mudaram."
 

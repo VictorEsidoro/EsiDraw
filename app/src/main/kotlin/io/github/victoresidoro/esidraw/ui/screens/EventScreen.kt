@@ -31,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import io.github.victoresidoro.esidraw.domain.message.Money
 import io.github.victoresidoro.esidraw.domain.model.EventSettings
@@ -171,6 +172,7 @@ fun EventScreen(
                             "Você só organiza: pode ver o resultado completo e o WhatsApp é a forma mais prática de entregar."
                         },
                         style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Justify,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
@@ -188,6 +190,7 @@ fun EventScreen(
                     "Tenta formar uma única roda (A→B→C→…→A), para ninguém descobrir o par por eliminação. " +
                         "Se as regras não permitirem, o app usa o melhor possível e avisa.",
                     style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Justify,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.weight(1f),
                 )

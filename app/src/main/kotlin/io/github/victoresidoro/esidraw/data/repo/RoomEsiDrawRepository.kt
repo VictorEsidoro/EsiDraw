@@ -49,8 +49,8 @@ class RoomEsiDrawRepository(private val db: EsiDrawDatabase) : EsiDrawRepository
             val clean = name.trim()
             val duplicate = dao.getParticipants().any { it.name.equals(clean, ignoreCase = true) && it.phone == phone }
             if (duplicate) return@withTransaction AddParticipantResult.DUPLICATE
+            // Com sorteio pronto, a pessoa entra "fora do sorteio" e é encaixada depois (DrawEditor).
             dao.insertParticipant(ParticipantEntity(name = clean, phone = phone))
-            discardDraw()
             AddParticipantResult.ADDED
         }
 
@@ -67,7 +67,6 @@ class RoomEsiDrawRepository(private val db: EsiDrawDatabase) : EsiDrawRepository
             dao.insertParticipant(ParticipantEntity(name = name, phone = contact.phone))
             added++
         }
-        if (added > 0) discardDraw()
         ImportCounts(added, duplicates)
     }
 
@@ -108,7 +107,20 @@ class RoomEsiDrawRepository(private val db: EsiDrawDatabase) : EsiDrawRepository
     override suspend fun removeParticipant(id: Long) {
         db.withTransaction {
             dao.deleteParticipant(id) // regras ligadas a ele saem junto (ON DELETE CASCADE)
-            discardDraw()
+        }
+    }
+
+    override suspend fun applyDrawEdit(
+        removeId: Long?,
+        assignments: Map<Long, Long>,
+        changedGivers: Set<Long>,
+        guarantee: CycleGuarantee,
+    ) {
+        db.withTransaction {
+            removeId?.let { dao.deleteParticipant(it) }
+            // setReceiver também zera o "enviado": só quem mudou precisa de mensagem nova.
+            changedGivers.forEach { giver -> assignments[giver]?.let { dao.setReceiver(giver, it) } }
+            writeEvent { it.copy(cycleGuarantee = guarantee) }
         }
     }
 

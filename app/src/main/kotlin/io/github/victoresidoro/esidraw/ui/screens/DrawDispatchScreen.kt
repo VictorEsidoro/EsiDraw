@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Face
 import androidx.compose.material.icons.outlined.Favorite
 import androidx.compose.material.icons.outlined.Info
@@ -33,6 +34,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import io.github.victoresidoro.esidraw.domain.message.WhatsAppMessage
@@ -52,6 +54,7 @@ fun DrawDispatchScreen(
     state: EsiDrawUiState,
     onDraw: () -> Unit,
     onClearDraw: () -> Unit,
+    onIncludePending: () -> Unit,
     onSetSent: (id: Long, sent: Boolean) -> Unit,
     onMessage: (String) -> Unit,
     modifier: Modifier = Modifier,
@@ -64,7 +67,8 @@ fun DrawDispatchScreen(
     var confirmRedo by rememberSaveable { mutableStateOf(false) }
 
     val byId = state.participants.associateBy { it.participant.id }
-    val sentCount = state.participants.count { it.messageSent }
+    val assigned = state.assigned
+    val sentCount = assigned.count { it.messageSent }
     val organizerPlays = state.event.organizerParticipates
 
     Column(
@@ -74,21 +78,22 @@ fun DrawDispatchScreen(
         ScreenHeader("Sorteio", "Sorteie e entregue a cada pessoa o nome que ela tirou.")
 
         val diagnosis = state.diagnosis
-        if (diagnosis != null && !state.hasDraw) {
+        if (diagnosis != null && !state.drawStarted) {
             NoticeCard(Icons.Outlined.Warning, MaterialTheme.colorScheme.errorContainer, MaterialTheme.colorScheme.onErrorContainer) {
                 Text("Sorteio impossível com estas regras", style = MaterialTheme.typography.titleMedium)
-                diagnosis.issues.forEach { Text("• ${it.message}", style = MaterialTheme.typography.bodyMedium) }
-                Text(diagnosis.neutralsMessage, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+
+
             }
         }
 
-        if (!state.hasDraw) {
+        if (!state.drawStarted) {
             SectionCard("Sortear", Icons.Outlined.Favorite) {
                 Text(
                     "${state.participants.size} participantes, " +
                         "${state.rules.blocks.size} bloqueio(s), ${state.rules.forced.size} par(es) forçado(s). " +
                         if (organizerPlays) "Ninguém vê o resultado: ele só aparece na mensagem de cada pessoa." else "O resultado só aparece na mensagem de cada pessoa, mas você pode vê-lo depois.",
                     style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Justify,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Button(onClick = onDraw, enabled = diagnosis == null, modifier = Modifier.fillMaxWidth()) { Text("Sortear") }
@@ -97,9 +102,24 @@ fun DrawDispatchScreen(
         }
 
         NoticeCard(Icons.Outlined.Info, successContainer, onSuccessContainer) {
-            Text("Sorteio feito · $sentCount de ${state.participants.size} entregues", style = MaterialTheme.typography.titleMedium)
+            Text("Sorteio feito · $sentCount de ${assigned.size} entregues", style = MaterialTheme.typography.titleMedium)
             val guarantee = EsiDrawViewModel.guaranteeText(state.event.cycleGuarantee)
-            if (guarantee.isNotEmpty()) Text(guarantee, style = MaterialTheme.typography.bodyMedium)
+
+        }
+
+        if (state.pending.isNotEmpty()) {
+            SectionCard("Entrou depois do sorteio", Icons.Outlined.Add) {
+                state.pending.forEach { Text("• ${it.participant.name}", style = MaterialTheme.typography.bodyLarge) }
+                Text(
+                    "O app encaixa a pessoa no sorteio que já existe, sem refazer tudo: normalmente só 1 pessoa " +
+                        "antiga ganha um resultado novo e precisa de nova mensagem. Quem já recebeu e não mudou " +
+                        "continua valendo.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Justify,
+                )
+                Button(onClick = onIncludePending, modifier = Modifier.fillMaxWidth()) { Text("Incluir no sorteio") }
+            }
         }
 
         if (organizerPlays) NoticeCard(Icons.Outlined.Warning, warningContainer, onWarningContainer) {
@@ -109,11 +129,12 @@ fun DrawDispatchScreen(
                     "quem abrir o chat vê o nome sorteado. Se você não quer saber, use \"Revelar aqui\": " +
                     "cada pessoa vê o próprio resultado na tela, sem enviar nada.",
                 style = MaterialTheme.typography.bodyMedium,
+                textAlign = TextAlign.Justify,
             )
         }
 
         SectionCard("Entrega individual", Icons.Outlined.Share) {
-            state.participants.forEach { status ->
+            assigned.forEach { status ->
                 val p = status.participant
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -200,7 +221,7 @@ fun DrawDispatchScreen(
         AlertDialog(
             onDismissRequest = { confirmPeek = false },
             title = { Text("Ver quem tirou quem?") },
-            text = { Text("Isso mostra TODO o resultado para você e acaba com a surpresa. Só continue se for mesmo necessário.") },
+            text = { Text("Isso mostra TODO o resultado para você e acaba com a surpresa. Só continue se for mesmo necessário.", textAlign = TextAlign.Justify) },
             confirmButton = {
                 TextButton(onClick = {
                     confirmPeek = false
@@ -216,7 +237,7 @@ fun DrawDispatchScreen(
             title = { Text("Resultado") },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    state.participants.forEach { s ->
+                    assigned.forEach { s ->
                         Text("${s.participant.name} → ${s.receiverId?.let { byId[it]?.participant?.name } ?: "?"}")
                     }
                 }
@@ -229,7 +250,7 @@ fun DrawDispatchScreen(
         AlertDialog(
             onDismissRequest = { confirmRedo = false },
             title = { Text("Refazer o sorteio?") },
-            text = { Text("O resultado atual e o status de envio serão apagados. Quem já recebeu a mensagem ficará com o resultado antigo.") },
+            text = { Text("O resultado atual e o status de envio serão apagados. Quem já recebeu a mensagem ficará com o resultado antigo.", textAlign = TextAlign.Justify) },
             confirmButton = {
                 TextButton(onClick = {
                     confirmRedo = false

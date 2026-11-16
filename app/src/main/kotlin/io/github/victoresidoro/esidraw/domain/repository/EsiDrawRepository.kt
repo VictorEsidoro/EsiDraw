@@ -31,7 +31,22 @@ interface EsiDrawRepository {
     /** Edita nome e telefone sem refazer o sorteio. Quem trocou de telefone volta a "Pendente". */
     suspend fun updateParticipant(id: Long, name: String, phone: String)
 
+    /**
+     * Remove a pessoa (as regras dela saem junto) sem mexer no resultado dos outros. Quem chama decide
+     * se o sorteio é descartado ([clearDraw]) ou ajustado ([applyDrawEdit]).
+     */
     suspend fun removeParticipant(id: Long)
+
+    /**
+     * Grava uma edição do sorteio pronto: remove [removeId] (se houver), grava o novo resultado só de
+     * [changedGivers] (eles voltam a "Pendente") e atualiza a garantia contra ciclos curtos.
+     */
+    suspend fun applyDrawEdit(
+        removeId: Long?,
+        assignments: Map<Long, Long>,
+        changedGivers: Set<Long>,
+        guarantee: CycleGuarantee,
+    )
 
     // --- Grupos: a lista atual vira um grupo salvo; no ano seguinte o grupo volta para a lista ---
 
