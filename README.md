@@ -162,7 +162,7 @@ Pré-requisitos: Android Studio recente (o AGP 9.4 pede **Gradle 9.6.0 ou mais n
 
 Pelo Android Studio: **File → Open** na pasta do projeto, aguarde o sync e rode **Run ▶**.
 
-> O esquema do Room é exportado para `app/schemas/` na primeira compilação. Versione essa pasta: ela é a base para validar as migrações quando o banco mudar.
+> O esquema do Room não é exportado (a exportação corrompia o build de release). Toda mudança de banco exige uma `Migration` escrita à mão e um teste instalando a versão nova por cima da anterior.
 
 ### Release assinado
 

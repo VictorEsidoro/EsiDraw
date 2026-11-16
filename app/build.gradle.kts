@@ -73,12 +73,6 @@ kotlin {
     jvmToolchain(21)
 }
 
-// O esquema do banco é exportado para app/schemas e deve ser versionado no Git:
-// ele é a base para validar migrações quando o banco mudar de versão.
-ksp {
-    arg("room.schemaLocation", "$projectDir/schemas")
-}
-
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

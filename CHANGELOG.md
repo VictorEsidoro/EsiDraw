@@ -21,6 +21,7 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ### Alterado
 
+- Banco: a exportação de esquema do Room foi desligada, porque o KSP corrompia o arquivo no build de release.
 - Adicionar pessoas com sorteio pronto não apaga mais o sorteio.
 - Textos corridos agora são justificados.
 

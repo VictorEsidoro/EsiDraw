@@ -16,7 +16,9 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         GroupMemberEntity::class,
     ],
     version = 2,
-    exportSchema = true,
+    // Sem exportação: as variantes debug e release do KSP escreviam o mesmo arquivo de esquema e o corrompiam.
+    // As migrações são escritas à mão (ver MIGRATION_1_2) e conferidas na instalação por cima.
+    exportSchema = false,
 )
 abstract class EsiDrawDatabase : RoomDatabase() {
 
