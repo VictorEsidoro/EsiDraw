@@ -45,7 +45,7 @@ Preencha as abas da esquerda para a direita (veja a tabela abaixo). Quando tudo 
 
 - **Digitando:** nome e telefone com DDD, por exemplo `(31) 98888-7777`.
 - **Da agenda:** toque em **Da agenda**. O app pede permissão de leitura da agenda só nesse momento. Use a busca, escolha um **rótulo** do Google Contatos para ver só aquele grupo, toque em **Marcar todos** e depois em **Importar**.
-- **Planilha:** toque em **Baixar modelo**, salve o arquivo, preencha **Nome** e **Telefone** no Excel ou no Google Planilhas e salve no celular ou no Drive. Depois toque em **Importar planilha** e escolha o arquivo. Se a planilha for do Google, use *Arquivo > Fazer download > Microsoft Excel (.xlsx)* antes de importar. Também funciona com `.csv`.
+- **Planilha:** toque em **Baixar modelo**, salve o arquivo, preencha **Nome** e **Telefone** no Excel ou no Google Planilhas e salve no celular ou no Drive. Depois toque em **Importar planilha** e escolha o arquivo. Se a planilha for do Google, use *Arquivo > Fazer download > Microsoft Excel (.xlsx)* antes de importar. Também funciona com `.csv`. Se a planilha chegar pelo WhatsApp, abra o arquivo ou toque em Compartilhar e escolha **EsiDraw**: ela é importada na hora.
 - **Colar lista:** cole um texto com uma pessoa por linha, por exemplo `Maria Silva - (31) 98888-7777`.
 - **Pelo WhatsApp:** nos dados do contato, use a opção de compartilhar o contato e escolha **EsiDraw**. Vários contatos de uma vez também funcionam. Contatos sem telefone com DDD são avisados e não entram na lista.
 

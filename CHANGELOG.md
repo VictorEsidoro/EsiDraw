@@ -16,6 +16,7 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
   - só quem mudou volta para **Pendente** e precisa de mensagem nova; o resto continua valendo;
   - regras (bloqueios e pares forçados) são sempre respeitadas e um par forçado nunca é desfeito;
   - se nenhuma opção servir, o app avisa e a saída é **Refazer sorteio**.
+- O EsiDraw aparece ao **compartilhar ou abrir** uma planilha `.xlsx`/`.csv` (por exemplo, recebida no WhatsApp): importa direto.
 - Testes de `DrawEditor` e de leitura de planilhas (xlsx gerado pelo Excel/openpyxl, csv, modelo vazio).
 
 ### Alterado
