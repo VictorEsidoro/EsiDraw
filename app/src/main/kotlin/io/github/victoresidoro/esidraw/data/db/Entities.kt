@@ -1,5 +1,6 @@
 package io.github.victoresidoro.esidraw.data.db
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
@@ -20,6 +21,8 @@ data class EventEntity(
     val timeMinutes: Int? = null,
     val location: String = "",
     val giftValueCents: Long? = null,
+    /** Nome de `GiftValueKind`. */
+    @ColumnInfo(defaultValue = "SUGGESTED") val giftValueKind: String = "SUGGESTED",
     val notes: String = "",
     val avoidShortCycles: Boolean = true,
     val organizerParticipates: Boolean = true,

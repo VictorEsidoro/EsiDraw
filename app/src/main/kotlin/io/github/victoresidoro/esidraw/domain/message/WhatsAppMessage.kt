@@ -8,6 +8,13 @@ import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
+/** Como o valor do presente é apresentado na mensagem. */
+enum class GiftValueKind(val label: String, val messageLabel: String) {
+    SUGGESTED("Sugerido", "Valor sugerido do presente"),
+    MINIMUM("Mínimo", "Valor mínimo do presente"),
+    MAXIMUM("Máximo", "Valor máximo do presente"),
+}
+
 /** Detalhes do evento que entram na mensagem de cada participante. */
 data class EventDetails(
     val name: String = "",
@@ -18,6 +25,8 @@ data class EventDetails(
     val location: String = "",
     /** Valor sugerido do presente, em centavos. */
     val giftValueCents: Long? = null,
+    /** Se o valor é sugerido, mínimo ou máximo. */
+    val giftValueKind: GiftValueKind = GiftValueKind.SUGGESTED,
     val notes: String = "",
 )
 
@@ -49,7 +58,7 @@ object WhatsAppMessage {
             hour != null -> appendLine("🕒 Horário: $hour")
         }
         if (event.location.isNotBlank()) appendLine("📍 Local: ${event.location.trim()}")
-        event.giftValueCents?.let { appendLine("💰 Valor sugerido do presente: ${currency(it)}") }
+        event.giftValueCents?.let { appendLine("💰 ${event.giftValueKind.messageLabel}: ${currency(it)}") }
         if (event.notes.isNotBlank()) appendLine("📝 Observações: ${event.notes.trim()}")
         appendLine()
         append("Shhh! É segredo, não conte pra ninguém. 🤫")

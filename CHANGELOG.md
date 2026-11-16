@@ -5,7 +5,11 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ## [Não lançado]
 
-## [0.4.1] - 2026-11-16
+## [0.5.0] - 2026-11-16
+
+### Adicionado
+
+- **Tipo do valor do presente:** na aba Evento dá para escolher se o valor é **Sugerido**, **Mínimo** ou **Máximo**, e a mensagem do WhatsApp usa o rótulo escolhido ("Valor mínimo do presente: R$ 50,00"). Eventos já salvos continuam como "Sugerido". Banco versão 5, com migração a partir da 4.
 
 ### Corrigido
 

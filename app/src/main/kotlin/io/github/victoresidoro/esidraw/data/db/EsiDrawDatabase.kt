@@ -17,7 +17,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         DrawHistoryEntity::class,
         DrawHistoryEntryEntity::class,
     ],
-    version = 4,
+    version = 5,
     // Sem exportação: as variantes debug e release do KSP escreviam o mesmo arquivo de esquema e o corrompiam.
     // As migrações são escritas à mão (ver MIGRATION_1_2) e conferidas na instalação por cima.
     exportSchema = false,
@@ -91,9 +91,16 @@ abstract class EsiDrawDatabase : RoomDatabase() {
             }
         }
 
+        /** 0.4.2: o valor do presente pode ser sugerido, mínimo ou máximo. */
+        private val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `event` ADD COLUMN `giftValueKind` TEXT NOT NULL DEFAULT 'SUGGESTED'")
+            }
+        }
+
         fun create(context: Context): EsiDrawDatabase =
             Room.databaseBuilder(context, EsiDrawDatabase::class.java, "esidraw.db")
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
                 .build()
     }
 }

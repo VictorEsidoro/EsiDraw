@@ -1,6 +1,7 @@
 package io.github.victoresidoro.esidraw.domain
 
 import io.github.victoresidoro.esidraw.domain.message.EventDetails
+import io.github.victoresidoro.esidraw.domain.message.GiftValueKind
 import io.github.victoresidoro.esidraw.domain.message.WhatsAppMessage
 import io.github.victoresidoro.esidraw.domain.model.Participant
 import org.junit.Assert.assertEquals
@@ -53,6 +54,15 @@ class WhatsAppMessageTest {
         assertTrue(text, text.contains("📅 Data: domingo, 20/12/2026"))
         assertFalse(text, text.contains(" às "))
         assertFalse(text, text.contains("Horário"))
+    }
+
+    @Test
+    fun `valor minimo e maximo aparecem com o rotulo certo`() {
+        val min = WhatsAppMessage.build(giver, receiver, EventDetails(giftValueCents = 5_000, giftValueKind = GiftValueKind.MINIMUM))
+        assertTrue(min, min.contains("Valor mínimo do presente: R$ 50,00"))
+        assertFalse(min, min.contains("sugerido"))
+        val max = WhatsAppMessage.build(giver, receiver, EventDetails(giftValueCents = 5_000, giftValueKind = GiftValueKind.MAXIMUM))
+        assertTrue(max, max.contains("Valor máximo do presente: R$ 50,00"))
     }
 
     @Test

@@ -10,6 +10,7 @@ import io.github.victoresidoro.esidraw.data.db.GroupMemberEntity
 import io.github.victoresidoro.esidraw.data.db.ParticipantEntity
 import io.github.victoresidoro.esidraw.data.db.RuleEntity
 import io.github.victoresidoro.esidraw.domain.message.EventDetails
+import io.github.victoresidoro.esidraw.domain.message.GiftValueKind
 import io.github.victoresidoro.esidraw.domain.model.AddParticipantResult
 import io.github.victoresidoro.esidraw.domain.model.Contact
 import io.github.victoresidoro.esidraw.domain.model.CycleGuarantee
@@ -248,6 +249,7 @@ class RoomEsiDrawRepository(private val db: EsiDrawDatabase) : EsiDrawRepository
             time = timeMinutes?.let { LocalTime.of(it / 60, it % 60) },
             location = location,
             giftValueCents = giftValueCents,
+            giftValueKind = runCatching { GiftValueKind.valueOf(giftValueKind) }.getOrDefault(GiftValueKind.SUGGESTED),
             notes = notes,
         ),
         avoidShortCycles = avoidShortCycles,
@@ -261,6 +263,7 @@ class RoomEsiDrawRepository(private val db: EsiDrawDatabase) : EsiDrawRepository
         timeMinutes = details.time?.let { it.hour * 60 + it.minute },
         location = details.location,
         giftValueCents = details.giftValueCents,
+        giftValueKind = details.giftValueKind.name,
         notes = details.notes,
         avoidShortCycles = avoidShortCycles,
         organizerParticipates = organizerParticipates,

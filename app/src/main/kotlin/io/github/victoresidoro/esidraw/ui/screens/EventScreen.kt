@@ -17,6 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.DateRange
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Switch
@@ -34,6 +35,7 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import io.github.victoresidoro.esidraw.domain.message.GiftValueKind
 import io.github.victoresidoro.esidraw.domain.message.Money
 import io.github.victoresidoro.esidraw.domain.model.EventSettings
 import io.github.victoresidoro.esidraw.ui.components.RoundedTextField
@@ -145,6 +147,15 @@ fun EventScreen(
                 keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
                 modifier = Modifier.fillMaxWidth(),
             )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                GiftValueKind.entries.forEach { kind ->
+                    FilterChip(
+                        selected = event.details.giftValueKind == kind,
+                        onClick = { onChange { s -> s.copy(details = s.details.copy(giftValueKind = kind)) } },
+                        label = { Text(kind.label) },
+                    )
+                }
+            }
             RoundedTextField(
                 value = value,
                 onValueChange = {
@@ -154,7 +165,7 @@ fun EventScreen(
                         onChange { s -> s.copy(details = s.details.copy(giftValueCents = cents)) }
                     }
                 },
-                label = { Text("Valor sugerido do presente (R$)") },
+                label = { Text("Valor ${event.details.giftValueKind.label.lowercase()} do presente (R$)") },
                 placeholder = { Text("100,00") },
                 singleLine = true,
                 isError = valueInvalid,

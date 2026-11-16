@@ -34,7 +34,7 @@ Preencha as abas da esquerda para a direita (veja a tabela abaixo). Quando tudo 
 
 | Aba | Para que serve |
 |---|---|
-| **Evento** | Nome, data e horário (cada um opcional, podem ficar em branco), local, valor sugerido e observações. Tudo isso vai automaticamente na mensagem de cada participante. Aqui também ficam as opções **Eu participo do sorteio** e de evitar duplas isoladas. |
+| **Evento** | Nome, data e horário (cada um opcional, podem ficar em branco), local, valor do presente (sugerido, mínimo ou máximo) e observações. Tudo isso vai automaticamente na mensagem de cada participante. Aqui também ficam as opções **Eu participo do sorteio** e de evitar duplas isoladas. |
 | **Pessoas** | Cadastro dos participantes: digitando, pela agenda do celular ou compartilhando contatos do WhatsApp. |
 | **Regras** | **Bloqueios** (quem não pode tirar quem, nos dois sentidos ou só em um) e **pares forçados** (quem tem que tirar quem). |
 | **Sorteio** | Faz o sorteio, mostra o diagnóstico se for impossível e controla a entrega individual de cada resultado. |
