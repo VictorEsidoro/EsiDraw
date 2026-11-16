@@ -5,6 +5,13 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ## [Não lançado]
 
+## [0.4.1] - 2026-11-16
+
+### Corrigido
+
+- **Data e horário do evento agora são independentes e opcionais.** Antes, ao escolher a data o app preenchia o horário sozinho (19:00) e não havia como tirar. Agora dá para preencher só a data, só o horário ou nenhum dos dois, e cada um tem o botão **Limpar**. Na mensagem do WhatsApp aparece só o que foi preenchido (data com "às HH:mm" quando há os dois, só a data, ou só "Horário").
+- Banco versão 4, com migração a partir da versão 3: eventos já salvos mantêm data e horário.
+
 ## [0.4.0] - 2026-11-16
 
 ### Adicionado

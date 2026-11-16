@@ -17,7 +17,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         DrawHistoryEntity::class,
         DrawHistoryEntryEntity::class,
     ],
-    version = 3,
+    version = 4,
     // Sem exportação: as variantes debug e release do KSP escreviam o mesmo arquivo de esquema e o corrompiam.
     // As migrações são escritas à mão (ver MIGRATION_1_2) e conferidas na instalação por cima.
     exportSchema = false,
@@ -70,9 +70,30 @@ abstract class EsiDrawDatabase : RoomDatabase() {
             }
         }
 
+        /** 0.5.0: data e horário do evento passam a ser independentes (podem ficar vazios cada um). */
+        private val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `event` ADD COLUMN `dateEpochDay` INTEGER")
+                db.execSQL("ALTER TABLE `event` ADD COLUMN `timeMinutes` INTEGER")
+                val millis = db.query("SELECT `dateTimeMillis` FROM `event` WHERE `dateTimeMillis` IS NOT NULL").use {
+                    if (it.moveToFirst()) it.getLong(0) else null
+                }
+                if (millis != null) {
+                    val local = java.time.LocalDateTime.ofInstant(
+                        java.time.Instant.ofEpochMilli(millis),
+                        java.time.ZoneId.systemDefault(),
+                    )
+                    db.execSQL(
+                        "UPDATE `event` SET `dateEpochDay` = ?, `timeMinutes` = ?, `dateTimeMillis` = NULL",
+                        arrayOf<Any>(local.toLocalDate().toEpochDay(), local.hour * 60 + local.minute),
+                    )
+                }
+            }
+        }
+
         fun create(context: Context): EsiDrawDatabase =
             Room.databaseBuilder(context, EsiDrawDatabase::class.java, "esidraw.db")
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
                 .build()
     }
 }

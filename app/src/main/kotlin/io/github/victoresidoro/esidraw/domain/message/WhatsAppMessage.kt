@@ -3,16 +3,18 @@ package io.github.victoresidoro.esidraw.domain.message
 import io.github.victoresidoro.esidraw.domain.model.Participant
 import java.net.URLEncoder
 import java.text.NumberFormat
-import java.time.Instant
-import java.time.ZoneId
+import java.time.LocalDate
+import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 /** Detalhes do evento que entram na mensagem de cada participante. */
 data class EventDetails(
     val name: String = "",
-    /** Data e hora do evento, em milissegundos desde 1970 (UTC), ou `null` se ainda não definida. */
-    val dateTimeMillis: Long? = null,
+    /** Dia do evento, ou `null` se ainda não definido. Independente do horário: dá para ter só um dos dois. */
+    val date: LocalDate? = null,
+    /** Horário do evento (relógio local), ou `null` se ainda não definido. */
+    val time: LocalTime? = null,
     val location: String = "",
     /** Valor sugerido do presente, em centavos. */
     val giftValueCents: Long? = null,
@@ -31,7 +33,6 @@ object WhatsAppMessage {
         giver: Participant,
         receiver: Participant,
         event: EventDetails,
-        zone: ZoneId = ZoneId.systemDefault(),
     ): String = buildString {
         appendLine("Olá, ${bold(giver.name)}! 🎁")
         appendLine()
@@ -40,11 +41,12 @@ object WhatsAppMessage {
         }
         appendLine("O seu amigo oculto é: ${bold(receiver.name)}")
         appendLine()
-        event.dateTimeMillis?.let { millis ->
-            val formatted = DateTimeFormatter.ofPattern("EEEE, dd/MM/yyyy 'às' HH:mm", ptBr)
-                .withZone(zone)
-                .format(Instant.ofEpochMilli(millis))
-            appendLine("📅 Data: $formatted")
+        val day = event.date?.let { DateTimeFormatter.ofPattern("EEEE, dd/MM/yyyy", ptBr).format(it) }
+        val hour = event.time?.let { DateTimeFormatter.ofPattern("HH:mm", ptBr).format(it) }
+        when {
+            day != null && hour != null -> appendLine("📅 Data: $day às $hour")
+            day != null -> appendLine("📅 Data: $day")
+            hour != null -> appendLine("🕒 Horário: $hour")
         }
         if (event.location.isNotBlank()) appendLine("📍 Local: ${event.location.trim()}")
         event.giftValueCents?.let { appendLine("💰 Valor sugerido do presente: ${currency(it)}") }

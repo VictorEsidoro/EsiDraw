@@ -21,6 +21,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -38,9 +39,8 @@ import io.github.victoresidoro.esidraw.domain.model.EventSettings
 import io.github.victoresidoro.esidraw.ui.components.RoundedTextField
 import io.github.victoresidoro.esidraw.ui.components.ScreenHeader
 import io.github.victoresidoro.esidraw.ui.components.SectionCard
-import java.time.Instant
-import java.time.LocalDateTime
-import java.time.ZoneId
+import java.time.LocalDate
+import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
 private const val NOTES_LIMIT = 500
@@ -54,7 +54,6 @@ fun EventScreen(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
-    val zone = remember { ZoneId.systemDefault() }
 
     // Os textos ficam num estado local (o banco confirma depois) para o cursor não pular ao digitar.
     var name by remember { mutableStateOf(event.details.name) }
@@ -63,13 +62,8 @@ fun EventScreen(
     var value by remember { mutableStateOf(event.details.giftValueCents?.let(Money::toInput).orEmpty()) }
     val valueInvalid = value.isNotBlank() && Money.parseCents(value) == null
 
-    val dateTime: LocalDateTime? = event.details.dateTimeMillis
-        ?.let { LocalDateTime.ofInstant(Instant.ofEpochMilli(it), zone) }
-
-    fun setDateTime(new: LocalDateTime) {
-        val millis = new.atZone(zone).toInstant().toEpochMilli()
-        onChange { it.copy(details = it.details.copy(dateTimeMillis = millis)) }
-    }
+    val date: LocalDate? = event.details.date
+    val time: LocalTime? = event.details.time
 
     Column(
         modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
@@ -91,33 +85,56 @@ fun EventScreen(
                 modifier = Modifier.fillMaxWidth(),
             )
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedButton(
-                    onClick = {
-                        val base = dateTime ?: LocalDateTime.now().withHour(19).withMinute(0).withSecond(0).withNano(0)
-                        DatePickerDialog(
-                            context,
-                            { _, y, m, d -> setDateTime(LocalDateTime.of(y, m + 1, d, base.hour, base.minute)) },
-                            base.year,
-                            base.monthValue - 1,
-                            base.dayOfMonth,
-                        ).show()
-                    },
-                    modifier = Modifier.weight(1f),
-                ) { Text(dateTime?.format(dateFormat) ?: "Data") }
-                OutlinedButton(
-                    onClick = {
-                        val base = dateTime ?: LocalDateTime.now().withHour(19).withMinute(0).withSecond(0).withNano(0)
-                        TimePickerDialog(
-                            context,
-                            { _, h, min -> setDateTime(base.withHour(h).withMinute(min)) },
-                            base.hour,
-                            base.minute,
-                            true,
-                        ).show()
-                    },
-                    modifier = Modifier.weight(1f),
-                ) { Text(dateTime?.format(timeFormat) ?: "Horário") }
+                Column(modifier = Modifier.weight(1f)) {
+                    OutlinedButton(
+                        onClick = {
+                            val base = date ?: LocalDate.now()
+                            DatePickerDialog(
+                                context,
+                                { _, y, m, d -> onChange { it.copy(details = it.details.copy(date = LocalDate.of(y, m + 1, d))) } },
+                                base.year,
+                                base.monthValue - 1,
+                                base.dayOfMonth,
+                            ).show()
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) { Text(date?.format(dateFormat) ?: "Data") }
+                    if (date != null) {
+                        TextButton(
+                            onClick = { onChange { it.copy(details = it.details.copy(date = null)) } },
+                            modifier = Modifier.fillMaxWidth(),
+                        ) { Text("Limpar data") }
+                    }
+                }
+                Column(modifier = Modifier.weight(1f)) {
+                    OutlinedButton(
+                        onClick = {
+                            val base = time ?: LocalTime.of(19, 0)
+                            TimePickerDialog(
+                                context,
+                                { _, h, min -> onChange { it.copy(details = it.details.copy(time = LocalTime.of(h, min))) } },
+                                base.hour,
+                                base.minute,
+                                true,
+                            ).show()
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) { Text(time?.format(timeFormat) ?: "Horário") }
+                    if (time != null) {
+                        TextButton(
+                            onClick = { onChange { it.copy(details = it.details.copy(time = null)) } },
+                            modifier = Modifier.fillMaxWidth(),
+                        ) { Text("Limpar horário") }
+                    }
+                }
             }
+            Text(
+                "Data e horário são opcionais e independentes: preencha só o que já souber. " +
+                    "O que ficar vazio não aparece na mensagem.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Justify,
+            )
             RoundedTextField(
                 value = location,
                 onValueChange = {

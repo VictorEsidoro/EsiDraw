@@ -26,6 +26,8 @@ import io.github.victoresidoro.esidraw.domain.repository.EsiDrawRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
+import java.time.LocalDate
+import java.time.LocalTime
 
 class RoomEsiDrawRepository(private val db: EsiDrawDatabase) : EsiDrawRepository {
 
@@ -242,7 +244,8 @@ class RoomEsiDrawRepository(private val db: EsiDrawDatabase) : EsiDrawRepository
     private fun EventEntity.toDomain() = EventSettings(
         details = EventDetails(
             name = name,
-            dateTimeMillis = dateTimeMillis,
+            date = dateEpochDay?.let(LocalDate::ofEpochDay),
+            time = timeMinutes?.let { LocalTime.of(it / 60, it % 60) },
             location = location,
             giftValueCents = giftValueCents,
             notes = notes,
@@ -254,7 +257,8 @@ class RoomEsiDrawRepository(private val db: EsiDrawDatabase) : EsiDrawRepository
 
     private fun EventSettings.toEntity() = EventEntity(
         name = details.name,
-        dateTimeMillis = details.dateTimeMillis,
+        dateEpochDay = details.date?.toEpochDay(),
+        timeMinutes = details.time?.let { it.hour * 60 + it.minute },
         location = details.location,
         giftValueCents = details.giftValueCents,
         notes = details.notes,

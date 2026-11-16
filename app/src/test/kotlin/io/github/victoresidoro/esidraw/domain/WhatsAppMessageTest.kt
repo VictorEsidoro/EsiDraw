@@ -7,18 +7,18 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.time.LocalDateTime
-import java.time.ZoneId
+import java.time.LocalDate
+import java.time.LocalTime
 
 class WhatsAppMessageTest {
 
-    private val zone = ZoneId.of("America/Sao_Paulo")
     private val giver = Participant(1, "Maria", "5531988887777")
     private val receiver = Participant(2, "João", "5531977776666")
 
     private val event = EventDetails(
         name = "Amigo Oculto da Família",
-        dateTimeMillis = LocalDateTime.of(2026, 12, 20, 19, 0).atZone(zone).toInstant().toEpochMilli(),
+        date = LocalDate.of(2026, 12, 20),
+        time = LocalTime.of(19, 0),
         location = "Rua das Flores, 123",
         giftValueCents = 10_000,
         notes = "Levar embrulhado",
@@ -26,7 +26,7 @@ class WhatsAppMessageTest {
 
     @Test
     fun `mensagem completa tem saudacao, sorteado em negrito e detalhes do evento`() {
-        val text = WhatsAppMessage.build(giver, receiver, event, zone)
+        val text = WhatsAppMessage.build(giver, receiver, event)
 
         assertTrue(text, text.startsWith("Olá, *Maria*!"))
         assertTrue(text, text.contains("*Amigo Oculto da Família*"))
@@ -39,7 +39,7 @@ class WhatsAppMessageTest {
 
     @Test
     fun `campos vazios do evento sao omitidos`() {
-        val text = WhatsAppMessage.build(giver, receiver, EventDetails(), zone)
+        val text = WhatsAppMessage.build(giver, receiver, EventDetails())
         assertTrue(text.contains("*João*"))
         assertFalse(text.contains("Data:"))
         assertFalse(text.contains("Local:"))
@@ -48,9 +48,24 @@ class WhatsAppMessageTest {
     }
 
     @Test
+    fun `so a data, sem horario, nao inventa horario`() {
+        val text = WhatsAppMessage.build(giver, receiver, EventDetails(date = LocalDate.of(2026, 12, 20)))
+        assertTrue(text, text.contains("📅 Data: domingo, 20/12/2026"))
+        assertFalse(text, text.contains(" às "))
+        assertFalse(text, text.contains("Horário"))
+    }
+
+    @Test
+    fun `so o horario, sem data`() {
+        val text = WhatsAppMessage.build(giver, receiver, EventDetails(time = LocalTime.of(14, 30)))
+        assertTrue(text, text.contains("🕒 Horário: 14:30"))
+        assertFalse(text, text.contains("Data:"))
+    }
+
+    @Test
     fun `asteriscos no nome nao quebram o negrito`() {
         val tricky = Participant(3, "Zé *VIP*", "5531900000000")
-        assertTrue(WhatsAppMessage.build(giver, tricky, EventDetails(), zone).contains("*Zé VIP*"))
+        assertTrue(WhatsAppMessage.build(giver, tricky, EventDetails()).contains("*Zé VIP*"))
     }
 
     @Test

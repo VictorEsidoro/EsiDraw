@@ -12,7 +12,12 @@ const val EVENT_ID = 1L
 data class EventEntity(
     @PrimaryKey val id: Long = EVENT_ID,
     val name: String = "",
+    /** Legado (até a 0.4.x guardava data+hora juntas). Migrado para [dateEpochDay]/[timeMinutes]; não é mais usado. */
     val dateTimeMillis: Long? = null,
+    /** Dia do evento (`LocalDate.toEpochDay`), ou `null`. */
+    val dateEpochDay: Long? = null,
+    /** Horário do evento em minutos desde 00:00, ou `null`. */
+    val timeMinutes: Int? = null,
     val location: String = "",
     val giftValueCents: Long? = null,
     val notes: String = "",
