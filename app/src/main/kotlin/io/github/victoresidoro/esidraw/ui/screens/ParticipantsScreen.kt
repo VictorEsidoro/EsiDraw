@@ -152,16 +152,20 @@ fun ParticipantsScreen(
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     OutlinedButton(
+                        onClick = { if (!shareTemplate(context)) onMessage("Não consegui enviar o modelo.") },
+                        modifier = Modifier.weight(1f),
+                    ) { Text("Enviar modelo") }
+                    OutlinedButton(
                         onClick = { saveTemplate.launch(XlsxTemplate.FILE_NAME) },
                         modifier = Modifier.weight(1f),
-                    ) { Text("Baixar modelo") }
-                    OutlinedButton(
-                        onClick = { pickSheet.launch(arrayOf("*/*")) },
-                        modifier = Modifier.weight(1f),
-                    ) { Text("Importar planilha") }
+                    ) { Text("Salvar modelo") }
                 }
+                OutlinedButton(
+                    onClick = { pickSheet.launch(arrayOf("*/*")) },
+                    modifier = Modifier.fillMaxWidth(),
+                ) { Text("Importar planilha") }
                 Text(
-                    "Planilha: baixe o modelo (.xlsx), preencha Nome e Telefone no Excel ou no Google Planilhas, " +
+                    "Planilha: envie o modelo (.xlsx) por WhatsApp, e-mail ou Drive, ou salve no celular; preencha Nome e Telefone no Excel ou no Google Planilhas, " +
                         "salve no celular ou no Drive e importe. Aceita também .csv.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,

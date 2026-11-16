@@ -9,13 +9,14 @@ O formato segue o [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e 
 
 ### Adicionado
 
-- **Planilha de participantes:** **Baixar modelo** gera um `.xlsx` vazio com as colunas Nome e Telefone (telefone já como texto, para o Excel não estragar o número); **Importar planilha** lê esse modelo, outros `.xlsx` e `.csv` (separador `;`, `,` ou tabulação, UTF-8 ou Latin-1). As colunas são achadas pelo cabeçalho; sem cabeçalho, vale nome e telefone. O arquivo pode vir do celular ou do Drive.
+- **Planilha de participantes:** **Salvar modelo** gera um `.xlsx` vazio com as colunas Nome e Telefone (telefone já como texto, para o Excel não estragar o número); **Importar planilha** lê esse modelo, outros `.xlsx` e `.csv` (separador `;`, `,` ou tabulação, UTF-8 ou Latin-1). As colunas são achadas pelo cabeçalho; sem cabeçalho, vale nome e telefone. O arquivo pode vir do celular ou do Drive.
 - **Editar o sorteio depois de pronto** (`DrawEditor`):
   - quem entra depois fica "fora do sorteio" e o botão **Incluir no sorteio** o encaixa no meio de uma seta existente: normalmente só 1 pessoa antiga ganha resultado novo, e o ciclo único é mantido;
   - ao remover alguém que já estava no sorteio, quem o tirava passa a tirar quem ele tirou; se uma regra impedir, o app ajusta mais uma pessoa;
   - só quem mudou volta para **Pendente** e precisa de mensagem nova; o resto continua valendo;
   - regras (bloqueios e pares forçados) são sempre respeitadas e um par forçado nunca é desfeito;
   - se nenhuma opção servir, o app avisa e a saída é **Refazer sorteio**.
+- **Enviar modelo:** o modelo da planilha pode ser enviado por qualquer app (WhatsApp, e-mail, Drive...) pela lista de compartilhamento; **Salvar modelo** continua gravando no celular.
 - O EsiDraw aparece ao **compartilhar ou abrir** uma planilha `.xlsx`/`.csv` (por exemplo, recebida no WhatsApp): importa direto.
 - Testes de `DrawEditor` e de leitura de planilhas (xlsx gerado pelo Excel/openpyxl, csv, modelo vazio).
 

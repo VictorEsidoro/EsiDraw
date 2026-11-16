@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- Só a pasta onde o modelo de planilha é gerado para ser enviado por outros apps. -->
+    <cache-path name="shared" path="shared/" />
+</paths>
